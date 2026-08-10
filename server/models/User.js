@@ -8,32 +8,33 @@ const UserSchema = new mongoose.Schema({
     unique: true,
     trim: true
   },
-  passwordHash: {
-    type: String,
-    required: true
-  },
   fullName: {
     type: String,
     required: true,
-    default: 'JN Admin'
+    trim: true
+  },
+  password: {
+    type: String,
+    required: true
   },
   role: {
     type: String,
-    enum: ['ADMIN', 'USER'],
-    default: 'ADMIN'
+    enum: ['ADMIN', 'NORMAL'],
+    default: 'NORMAL'
   }
 }, { timestamps: true });
 
-UserSchema.methods.matchPassword = async function(enteredPassword) {
-  return await bcrypt.compare(enteredPassword, this.passwordHash);
-};
-
-UserSchema.pre('save', async function(next) {
-  if (!this.isModified('passwordHash')) {
-    next();
-  }
+// Pre-save hook to hash password if modified
+UserSchema.pre('save', async function (next) {
+  if (!this.isModified('password')) return next();
   const salt = await bcrypt.genSalt(10);
-  this.passwordHash = await bcrypt.hash(this.passwordHash, salt);
+  this.password = await bcrypt.hash(this.password, salt);
+  next();
 });
+
+// Helper method to compare password
+UserSchema.methods.matchPassword = async function (enteredPassword) {
+  return await bcrypt.compare(enteredPassword, this.password);
+};
 
 module.exports = mongoose.model('User', UserSchema);

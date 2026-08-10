@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import toast from 'react-hot-toast';
 import DashboardLayout from '../../components/layout/DashboardLayout';
-import { Plus, Search, Filter, Eye, Printer, Edit3, Trash2, DollarSign, CreditCard, Download } from 'lucide-react';
+import { Plus, Search, Filter, Eye, Printer, Edit3, Trash2, DollarSign, CreditCard, Download, Calendar } from 'lucide-react';
 import { printDocumentInIframe } from '../../utils/print';
 import { useNavigate } from 'react-router-dom';
+import { useConfirm } from '../../contexts/ConfirmContext';
 
 const InvoiceListPage = () => {
   const [invoices, setInvoices] = useState([]);
@@ -17,7 +19,13 @@ const InvoiceListPage = () => {
   const [payMethod, setPayMethod] = useState('BANK_TRANSFER');
   const [payRef, setPayRef] = useState('');
 
+  // Due Date Modal State
+  const [dueDateModalItem, setDueDateModalItem] = useState(null);
+  const [newDueDate, setNewDueDate] = useState('');
+  const [savingDueDate, setSavingDueDate] = useState(false);
+
   const navigate = useNavigate();
+  const confirm = useConfirm();
 
   useEffect(() => {
     fetchInvoices();
@@ -37,18 +45,60 @@ const InvoiceListPage = () => {
     }
   };
 
+  const handleOpenDueDateModal = (inv) => {
+    setDueDateModalItem(inv);
+    const current = inv.dueDate || inv.date;
+    if (current && current.includes('.')) {
+      const parts = current.split('.');
+      if (parts.length === 3) {
+        setNewDueDate(`${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`);
+        return;
+      }
+    }
+    setNewDueDate('');
+  };
+
+  const handleSaveDueDateModal = async () => {
+    if (!dueDateModalItem || !newDueDate) return;
+    try {
+      setSavingDueDate(true);
+      const parts = newDueDate.split('-');
+      const formattedDate = `${parts[2]}.${parts[1]}.${parts[0]}`;
+
+      await axios.patch(`/api/invoices/${dueDateModalItem._id}/due-date`, {
+        dueDate: formattedDate
+      });
+
+      toast.success('Due date updated successfully!');
+      setDueDateModalItem(null);
+      fetchInvoices();
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Error updating due date');
+    } finally {
+      setSavingDueDate(false);
+    }
+  };
+
   const handleSearch = (e) => {
     e.preventDefault();
     fetchInvoices();
   };
 
   const handleDelete = async (id, invoiceNo) => {
-    if (window.confirm(`Are you sure you want to delete invoice "${invoiceNo}"?`)) {
+    const isConfirmed = await confirm({
+      title: 'Delete Invoice',
+      message: `Are you sure you want to delete invoice "${invoiceNo}"? This action cannot be undone.`,
+      confirmText: 'Delete Invoice',
+      type: 'danger'
+    });
+
+    if (isConfirmed) {
       try {
         await axios.delete(`/api/invoices/${id}`);
+        toast.success(`Invoice "${invoiceNo}" deleted successfully`);
         fetchInvoices();
       } catch (error) {
-        alert(error.response?.data?.message || 'Error deleting invoice');
+        toast.error(error.response?.data?.message || 'Error deleting invoice');
       }
     }
   };
@@ -57,7 +107,7 @@ const InvoiceListPage = () => {
     if (!paymentModalItem) return;
     const amountNum = parseFloat(payAmount);
     if (!amountNum || amountNum <= 0) {
-      alert('Please enter a valid payment amount!');
+      toast.error('Please enter a valid payment amount!');
       return;
     }
 
@@ -68,13 +118,13 @@ const InvoiceListPage = () => {
         method: payMethod,
         reference: payRef
       });
-      alert('Payment recorded successfully!');
+      toast.success('Payment recorded successfully!');
       setPaymentModalItem(null);
       setPayAmount('');
       setPayRef('');
       fetchInvoices();
     } catch (error) {
-      alert(error.response?.data?.message || 'Error recording payment');
+      toast.error(error.response?.data?.message || 'Error recording payment');
     }
   };
 
@@ -100,14 +150,7 @@ const InvoiceListPage = () => {
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            style={{
-              padding: '10px 12px',
-              backgroundColor: 'var(--bg-card)',
-              border: '1px solid var(--border-color)',
-              color: '#fff',
-              borderRadius: '6px',
-              fontWeight: 500
-            }}
+            className="filter-select"
           >
             <option value="ALL">All Statuses</option>
             <option value="PENDING">Pending Payment</option>
@@ -130,6 +173,7 @@ const InvoiceListPage = () => {
               <th>Invoice No</th>
               <th>PO Number</th>
               <th>Date</th>
+              <th>Due Date</th>
               <th>Customer</th>
               <th>Status</th>
               <th>Total ($)</th>
@@ -144,6 +188,7 @@ const InvoiceListPage = () => {
                   <td style={{ fontWeight: 'bold', color: 'var(--accent-orange)' }}>{inv.invoiceNo}</td>
                   <td style={{ fontWeight: 'bold' }}>{inv.poNumber}</td>
                   <td>{inv.date}</td>
+                  <td>{inv.dueDate || inv.date}</td>
                   <td>{inv.company?.name || 'Constance Halaveli'}</td>
                   <td>
                     <span className={`badge badge-${inv.status.toLowerCase()}`}>{inv.status}</span>
@@ -175,6 +220,13 @@ const InvoiceListPage = () => {
                         <Eye size={14} /> View
                       </button>
                       <button
+                        onClick={() => handleOpenDueDateModal(inv)}
+                        className="btn-secondary"
+                        title="Edit Due Date Calendar"
+                      >
+                        <Calendar size={14} /> Due Date
+                      </button>
+                      <button
                         onClick={() => navigate(`/invoices/edit/${inv._id}`)}
                         className="btn-secondary"
                         title="Edit Invoice"
@@ -201,7 +253,7 @@ const InvoiceListPage = () => {
               ))
             ) : (
               <tr>
-                <td colSpan="8" style={{ textAlign: 'center', padding: '40px', color: 'var(--text-secondary)' }}>
+                <td colSpan="9" style={{ textAlign: 'center', padding: '40px', color: 'var(--text-secondary)' }}>
                   No invoices found. Click "Create Invoice" to start!
                 </td>
               </tr>
@@ -209,6 +261,49 @@ const InvoiceListPage = () => {
           </tbody>
         </table>
       </div>
+
+      {/* Edit Due Date Modal */}
+      {dueDateModalItem && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+          backgroundColor: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000
+        }}>
+          <div style={{
+            backgroundColor: 'var(--bg-card)', padding: '28px', borderRadius: '12px', width: '400px',
+            border: '1px solid var(--border-color)', boxShadow: '0 10px 30px rgba(0,0,0,0.5)'
+          }}>
+            <h3 style={{ marginTop: 0, marginBottom: '8px' }}>Set Invoice Due Date</h3>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '13px', marginBottom: '20px' }}>
+              Invoice: <strong style={{ color: 'var(--accent-orange)' }}>{dueDateModalItem.invoiceNo}</strong> | Current Due: <strong>{dueDateModalItem.dueDate || dueDateModalItem.date}</strong>
+            </p>
+
+            <div className="form-group" style={{ marginBottom: '24px' }}>
+              <label style={{ display: 'block', marginBottom: '8px', fontWeight: '600', fontSize: '13px' }}>Select New Due Date (Calendar):</label>
+              <input
+                type="date"
+                value={newDueDate}
+                onChange={(e) => setNewDueDate(e.target.value)}
+                style={{
+                  padding: '10px 12px',
+                  borderRadius: '8px',
+                  border: '1px solid var(--border-color)',
+                  fontSize: '14px',
+                  width: '100%',
+                  background: 'var(--bg-main)',
+                  color: 'var(--text-main)'
+                }}
+              />
+            </div>
+
+            <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+              <button onClick={() => setDueDateModalItem(null)} className="btn-secondary">Cancel</button>
+              <button onClick={handleSaveDueDateModal} disabled={savingDueDate} className="btn-primary">
+                {savingDueDate ? 'Saving...' : 'Save Due Date'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Record Payment Modal */}
       {paymentModalItem && (

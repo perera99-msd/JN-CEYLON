@@ -2,13 +2,14 @@ const express = require('express');
 const router = express.Router();
 const Invoice = require('../models/Invoice');
 const Quotation = require('../models/Quotation');
-const { getNextSequence } = require('../services/sequenceService');
+const Payment = require('../models/Payment');
+const { previewNextSequence, consumeNextSequence } = require('../services/sequenceService');
 
 // GET /api/invoices - List with filters
 router.get('/', async (req, res) => {
   try {
     const { status, companyId, search } = req.query;
-    let query = {};
+    let query = { isDeleted: { $ne: true } };
 
     if (status && status !== 'ALL') {
       query.status = status;
@@ -39,7 +40,7 @@ router.get('/', async (req, res) => {
 // GET /api/invoices/next-number - Get next invoice number
 router.get('/next-number', async (req, res) => {
   try {
-    const nextNo = await getNextSequence('INVOICE');
+    const nextNo = await previewNextSequence('INVOICE');
     res.json({ nextNo });
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -64,8 +65,12 @@ router.post('/', async (req, res) => {
   try {
     let { invoiceNo, date, company, custCode, preparedBy, poNumber, quotationNo, quotation, items, terms, dueDate, status } = req.body;
 
+    const expectedNextNo = await previewNextSequence('INVOICE');
+
     if (!invoiceNo) {
-      invoiceNo = await getNextSequence('INVOICE');
+      invoiceNo = await consumeNextSequence('INVOICE');
+    } else if (invoiceNo === expectedNextNo) {
+      await consumeNextSequence('INVOICE');
     }
 
     // Duplicate check
@@ -131,7 +136,14 @@ router.post('/from-quotation/:quotationId', async (req, res) => {
     const quotation = await Quotation.findById(req.params.quotationId).populate('company');
     if (!quotation) return res.status(404).json({ message: 'Quotation not found' });
 
-    const nextInvNo = invoiceNo || (await getNextSequence('INVOICE'));
+    const expectedNextNo = await previewNextSequence('INVOICE');
+    
+    let nextInvNo = invoiceNo;
+    if (!nextInvNo) {
+      nextInvNo = await consumeNextSequence('INVOICE');
+    } else if (nextInvNo === expectedNextNo) {
+      await consumeNextSequence('INVOICE');
+    }
 
     // Duplicate check
     const existing = await Invoice.findOne({ invoiceNo: nextInvNo.trim() });
@@ -246,12 +258,39 @@ router.put('/:id', async (req, res) => {
   }
 });
 
+// PATCH /api/invoices/:id/due-date - Quick update due date
+router.patch('/:id/due-date', async (req, res) => {
+  try {
+    const { dueDate } = req.body;
+    const invoice = await Invoice.findByIdAndUpdate(
+      req.params.id,
+      { dueDate },
+      { new: true }
+    ).populate('company').populate('quotation');
+    if (!invoice) return res.status(404).json({ message: 'Invoice not found' });
+    res.json(invoice);
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+});
+
 // DELETE /api/invoices/:id
 router.delete('/:id', async (req, res) => {
   try {
-    const invoice = await Invoice.findByIdAndDelete(req.params.id);
+    const invoice = await Invoice.findByIdAndUpdate(
+      req.params.id,
+      { isDeleted: true, deletedAt: new Date() },
+      { new: true }
+    );
     if (!invoice) return res.status(404).json({ message: 'Invoice not found' });
-    res.json({ message: 'Invoice deleted successfully' });
+
+    // Cascade soft-delete all payments linked to this invoice
+    await Payment.updateMany(
+      { invoice: req.params.id },
+      { isDeleted: true, deletedAt: new Date() }
+    );
+
+    res.json({ message: 'Invoice and associated payments moved to Recycle Bin' });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

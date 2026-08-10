@@ -431,6 +431,34 @@ body {
     box-shadow: 0 0 0 3px rgba(244, 122, 32, 0.15);
 }
 
+/* Reusable Filter Dropdown Styling */
+.filter-select {
+    padding: 10px 14px;
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    font-family: inherit;
+    box-shadow: var(--input-shadow);
+    cursor: pointer;
+    outline: none;
+    transition: all 0.2s ease;
+}
+
+.filter-select:focus {
+    outline: none;
+    border-color: var(--palette-orange);
+    box-shadow: 0 0 0 3px rgba(244, 122, 32, 0.15);
+}
+
+.filter-select option {
+    background-color: #ffffff;
+    color: #0f172a;
+    padding: 8px 12px;
+}
+
 /* Login Page Styling */
 .login-container {
     min-height: 100vh;

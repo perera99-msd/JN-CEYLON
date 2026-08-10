@@ -7,14 +7,19 @@ const SequenceSchema = new mongoose.Schema({
     unique: true, // QUOTATION or INVOICE
     enum: ['QUOTATION', 'INVOICE']
   },
-  prefix: {
-    type: String,
-    required: true
+  prefixNumber: {
+    type: Number
+  },
+  code: {
+    type: String
   },
   currentNumber: {
     type: Number,
     required: true,
     default: 100
+  },
+  prefix: {
+    type: String // kept temporarily to assist with migration
   }
 }, { timestamps: true });
 

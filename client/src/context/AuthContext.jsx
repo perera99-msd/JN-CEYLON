@@ -1,24 +1,29 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import axios from 'axios';
 
+axios.defaults.withCredentials = true;
+
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState({ username: 'admin', fullName: 'JN Ceylon Admin', role: 'ADMIN' });
-  const [loading, setLoading] = useState(false);
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Fetch user info
-    axios.get('/api/auth/me')
-      .then(res => {
-        if (res.data) setUser(res.data);
-      })
-      .catch(() => {
-        // Fallback default dev admin
-        setUser({ username: 'admin', fullName: 'JN Ceylon Admin', role: 'ADMIN' });
-      })
-      .finally(() => setLoading(false));
+    fetchCurrentUser();
   }, []);
+
+  const fetchCurrentUser = async () => {
+    try {
+      setLoading(true);
+      const res = await axios.get('/api/auth/me');
+      setUser(res.data);
+    } catch (error) {
+      setUser(null);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const login = async (username, password) => {
     const res = await axios.post('/api/auth/login', { username, password });
@@ -27,12 +32,17 @@ export const AuthProvider = ({ children }) => {
   };
 
   const logout = async () => {
-    await axios.post('/api/auth/logout');
-    setUser(null);
+    try {
+      await axios.post('/api/auth/logout');
+    } catch (err) {
+      console.error('Logout error:', err);
+    } finally {
+      setUser(null);
+    }
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, logout, fetchCurrentUser }}>
       {children}
     </AuthContext.Provider>
   );

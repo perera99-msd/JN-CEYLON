@@ -5,10 +5,15 @@ const StatementTemplate = ({ data }) => {
   const {
     company,
     statementDate = new Date().toLocaleDateString('en-GB').replace(/\//g, '.'),
-    items = []
+    items = [],
+    pendingTotalBalance,
+    accountTotalBalance
   } = data || {};
 
-  const totalBalance = (items || []).reduce((sum, item) => sum + parseFloat(item.total || item.balanceDue || 0), 0);
+  const itemsTotalSum = (items || []).reduce((sum, item) => sum + parseFloat(item.total || item.balanceDue || 0), 0);
+  const pendingDisplay = pendingTotalBalance !== undefined ? pendingTotalBalance : itemsTotalSum;
+  const accountDisplay = accountTotalBalance !== undefined ? accountTotalBalance : itemsTotalSum;
+
   const itemsPerPage = 10;
   const totalPages = Math.max(1, Math.ceil((items || []).length / itemsPerPage));
 
@@ -59,7 +64,7 @@ const StatementTemplate = ({ data }) => {
                           Total Balance
                         </td>
                         <td style={{ background: '#fff', color: '#000', textAlign: 'center', fontWeight: 'bold' }}>
-                          $ {totalBalance.toFixed(2)}
+                          $ {accountDisplay.toFixed(2)}
                         </td>
                       </tr>
                       <tr>
@@ -115,7 +120,7 @@ const StatementTemplate = ({ data }) => {
                           Pending Total Balance
                         </td>
                         <td style={{ width: '10%', background: '#000', color: '#fff', textAlign: 'center', fontWeight: 'bold', border: '1px solid #000', fontSize: '14px', whiteSpace: 'nowrap' }}>
-                          $ {totalBalance.toFixed(2)}
+                          $ {pendingDisplay.toFixed(2)}
                         </td>
                       </tr>
                       <tr style={{ height: '28px' }}>
@@ -123,14 +128,14 @@ const StatementTemplate = ({ data }) => {
                           Account Total Balance
                         </td>
                         <td style={{ width: '10%', background: '#000', color: '#fff', textAlign: 'center', fontWeight: 'bold', border: '1px solid #000', fontSize: '14px', whiteSpace: 'nowrap' }}>
-                          $ {totalBalance.toFixed(2)}
+                          $ {accountDisplay.toFixed(2)}
                         </td>
                       </tr>
                     </tbody>
                   </table>
 
                   <div style={{ textAlign: 'center', fontSize: '14px', fontWeight: 'bold', marginTop: '15px', lineHeight: '1.6' }}>
-                    Your account balance is <strong>${totalBalance.toFixed(2)}</strong> Please make your payment to cover the balance by the due date.<br />
+                    Your account balance is <strong>${pendingDisplay.toFixed(2)}</strong> Please make your payment to cover the balance by the due date.<br />
                     Make all checks payable to Ceylon Engineers<br />
                     <span style={{ fontSize: '16px', fontWeight: 'bold' }}>Thank you for your business!</span><br />
                     <span style={{ fontSize: '13px', fontWeight: 'normal' }}>
@@ -184,7 +189,7 @@ const StatementTemplate = ({ data }) => {
                         Pending Total Balance
                       </td>
                       <td style={{ width: '10%', background: '#000', color: '#fff', textAlign: 'center', fontWeight: 'bold', border: '1px solid #000', fontSize: '14px', whiteSpace: 'nowrap' }}>
-                        $ {totalBalance.toFixed(2)}
+                        $ {pendingDisplay.toFixed(2)}
                       </td>
                     </tr>
                     <tr style={{ height: '28px' }}>
@@ -192,14 +197,14 @@ const StatementTemplate = ({ data }) => {
                         Account Total Balance
                       </td>
                       <td style={{ width: '10%', background: '#000', color: '#fff', textAlign: 'center', fontWeight: 'bold', border: '1px solid #000', fontSize: '14px', whiteSpace: 'nowrap' }}>
-                        $ {totalBalance.toFixed(2)}
+                        $ {accountDisplay.toFixed(2)}
                       </td>
                     </tr>
                   </tbody>
                 </table>
 
                 <div style={{ textAlign: 'center', fontSize: '14px', fontWeight: 'bold', marginTop: '15px', lineHeight: '1.6' }}>
-                  Your account balance is <strong>${totalBalance.toFixed(2)}</strong> Please make your payment to cover the balance by the due date.<br />
+                  Your account balance is <strong>${pendingDisplay.toFixed(2)}</strong> Please make your payment to cover the balance by the due date.<br />
                   Make all checks payable to Ceylon Engineers<br />
                   <span style={{ fontSize: '16px', fontWeight: 'bold' }}>Thank you for your business!</span><br />
                   <span style={{ fontSize: '13px', fontWeight: 'normal' }}>

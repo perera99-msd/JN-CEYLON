@@ -70,7 +70,11 @@ const InvoiceSchema = new mongoose.Schema({
     delivery: { type: String, default: '3 to 4 weeks from order confirmation.' },
     term: { type: String, default: 'Payment upon order confirmation.' },
     validity: { type: String, default: '30 Days.' }
-  }
+  },
+  isDeleted: { type: Boolean, default: false },
+  deletedAt: { type: Date, default: null }
 }, { timestamps: true });
+
+InvoiceSchema.index({ deletedAt: 1 }, { expireAfterSeconds: 30 * 24 * 60 * 60 });
 
 module.exports = mongoose.model('Invoice', InvoiceSchema);

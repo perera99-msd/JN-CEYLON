@@ -1,11 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import toast from 'react-hot-toast';
 import DashboardLayout from '../../components/layout/DashboardLayout';
 import { Trash2, DollarSign } from 'lucide-react';
+import { useConfirm } from '../../contexts/ConfirmContext';
 
 const PaymentListPage = () => {
   const [payments, setPayments] = useState([]);
   const [loading, setLoading] = useState(true);
+  const confirm = useConfirm();
 
   useEffect(() => {
     fetchPayments();
@@ -24,12 +27,20 @@ const PaymentListPage = () => {
   };
 
   const handleDeletePayment = async (id, amount) => {
-    if (window.confirm(`Revert payment of $${amount}? This will restore the invoice balance due.`)) {
+    const isConfirmed = await confirm({
+      title: 'Revert Payment',
+      message: `Are you sure you want to revert this payment of $${amount}? This will restore the invoice balance due.`,
+      confirmText: 'Revert Payment',
+      type: 'danger'
+    });
+
+    if (isConfirmed) {
       try {
         await axios.delete(`/api/payments/${id}`);
+        toast.success(`Payment of $${amount} reverted successfully`);
         fetchPayments();
       } catch (error) {
-        alert(error.response?.data?.message || 'Error reverting payment');
+        toast.error(error.response?.data?.message || 'Error reverting payment');
       }
     }
   };

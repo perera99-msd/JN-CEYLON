@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import toast from 'react-hot-toast';
 import DashboardLayout from '../../components/layout/DashboardLayout';
 import InvoiceTemplate from '../../components/templates/InvoiceTemplate';
 import { Plus, Trash2, Save, Printer, Download, ArrowLeft, DollarSign } from 'lucide-react';
@@ -163,25 +164,25 @@ const InvoiceEditorPage = () => {
 
   const handleSave = async () => {
     if (!formData.invoiceNo.trim()) {
-      alert('Invoice number is required!');
+      toast.error('Invoice number is required!');
       return;
     }
     if (!formData.poNumber.trim()) {
-      alert('PO number is required for an Invoice!');
+      toast.error('PO number is required for an Invoice!');
       return;
     }
     try {
       setSaving(true);
       if (isEdit) {
         await axios.put(`/api/invoices/${id}`, formData);
-        alert('Invoice updated successfully!');
+        toast.success('Invoice updated successfully!');
       } else {
         const res = await axios.post('/api/invoices', formData);
-        alert(`Invoice "${res.data.invoiceNo}" saved successfully!`);
+        toast.success(`Invoice "${res.data.invoiceNo}" saved successfully!`);
         navigate(`/invoices/edit/${res.data._id}`);
       }
     } catch (error) {
-      alert(error.response?.data?.message || 'Error saving invoice');
+      toast.error(error.response?.data?.message || 'Error saving invoice');
     } finally {
       setSaving(false);
     }

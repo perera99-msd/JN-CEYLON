@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import toast from 'react-hot-toast';
 import DashboardLayout from '../../components/layout/DashboardLayout';
 import QuotationTemplate from '../../components/templates/QuotationTemplate';
 import { Plus, Trash2, Save, Printer, Download, ArrowLeft } from 'lucide-react';
@@ -160,21 +161,21 @@ const QuotationEditorPage = () => {
 
   const handleSave = async () => {
     if (!formData.quotationNo.trim()) {
-      alert('Quotation number is required!');
+      toast.error('Quotation number is required!');
       return;
     }
     try {
       setSaving(true);
       if (isEdit) {
         await axios.put(`/api/quotations/${id}`, formData);
-        alert('Quotation updated successfully!');
+        toast.success('Quotation updated successfully!');
       } else {
         const res = await axios.post('/api/quotations', formData);
-        alert(`Quotation "${res.data.quotationNo}" saved successfully!`);
+        toast.success(`Quotation "${res.data.quotationNo}" saved successfully!`);
         navigate(`/quotations/edit/${res.data._id}`);
       }
     } catch (error) {
-      alert(error.response?.data?.message || 'Error saving quotation');
+      toast.error(error.response?.data?.message || 'Error saving quotation');
     } finally {
       setSaving(false);
     }

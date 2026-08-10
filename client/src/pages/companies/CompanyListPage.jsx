@@ -1,13 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import toast from 'react-hot-toast';
 import DashboardLayout from '../../components/layout/DashboardLayout';
 import { Plus, Edit3, Trash2, CheckCircle } from 'lucide-react';
+import { useConfirm } from '../../contexts/ConfirmContext';
 
 const CompanyListPage = () => {
   const [companies, setCompanies] = useState([]);
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
   const [editingId, setEditingId] = useState(null);
+  const confirm = useConfirm();
 
   const [formData, setFormData] = useState({
     name: '',
@@ -71,29 +74,39 @@ const CompanyListPage = () => {
   const handleSave = async (e) => {
     e.preventDefault();
     if (!formData.name.trim()) {
-      alert('Company name is required');
+      toast.error('Company name is required');
       return;
     }
     try {
       if (editingId) {
         await axios.put(`/api/companies/${editingId}`, formData);
+        toast.success('Company updated successfully!');
       } else {
         await axios.post('/api/companies', formData);
+        toast.success('Company added successfully!');
       }
       setModalOpen(false);
       fetchCompanies();
     } catch (error) {
-      alert(error.response?.data?.message || 'Error saving company');
+      toast.error(error.response?.data?.message || 'Error saving company');
     }
   };
 
   const handleDelete = async (id, name) => {
-    if (window.confirm(`Delete company "${name}"?`)) {
+    const isConfirmed = await confirm({
+      title: 'Delete Company',
+      message: `Are you sure you want to delete company "${name}"? This action cannot be undone.`,
+      confirmText: 'Delete Company',
+      type: 'danger'
+    });
+
+    if (isConfirmed) {
       try {
         await axios.delete(`/api/companies/${id}`);
+        toast.success(`Company "${name}" deleted successfully`);
         fetchCompanies();
       } catch (error) {
-        alert(error.response?.data?.message || 'Error deleting company');
+        toast.error(error.response?.data?.message || 'Error deleting company');
       }
     }
   };

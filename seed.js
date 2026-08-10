@@ -11,20 +11,8 @@ async function seedDB() {
     await mongoose.connect(process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/jn_ceylon_erp');
     console.log('Database connected for seeding...');
 
-    // 1. Seed Admin User
-    const existingUser = await User.findOne({ username: 'admin' });
-    if (!existingUser) {
-      const admin = new User({
-        username: 'admin',
-        passwordHash: 'admin123', // Will be hashed automatically by pre-save hook
-        fullName: 'JN Ceylon Admin',
-        role: 'ADMIN'
-      });
-      await admin.save();
-      console.log('Created admin user (admin / admin123)');
-    } else {
-      console.log('Admin user already exists');
-    }
+    // 1. Seed Admin User - Now handled automatically on server startup by server/services/seedAdmin.js
+    console.log('Skipping Admin user seed (handled by server startup)');
 
     // 2. Seed Default Company (Constance Halaveli)
     const existingCompany = await Company.findOne({ name: 'Constance Halaveli' });

@@ -1,13 +1,13 @@
 const express = require('express');
 const router = express.Router();
 const Quotation = require('../models/Quotation');
-const { getNextSequence } = require('../services/sequenceService');
+const { previewNextSequence, consumeNextSequence } = require('../services/sequenceService');
 
 // GET /api/quotations - List with status and search filters
 router.get('/', async (req, res) => {
   try {
     const { status, companyId, search } = req.query;
-    let query = {};
+    let query = { isDeleted: { $ne: true } };
 
     if (status && status !== 'ALL') {
       query.status = status;
@@ -36,8 +36,9 @@ router.get('/', async (req, res) => {
 // GET /api/quotations/next-number - Get auto-generated next quotation number
 router.get('/next-number', async (req, res) => {
   try {
-    const nextNo = await getNextSequence('QUOTATION');
+    const nextNo = await previewNextSequence('QUOTATION');
     res.json({ nextNo });
+
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -59,8 +60,15 @@ router.post('/', async (req, res) => {
   try {
     let { quotationNo, date, company, custCode, preparedBy, items, terms, status, poNumber } = req.body;
 
+    // Check what the auto-increment expects next
+    const expectedNextNo = await previewNextSequence('QUOTATION');
+    
     if (!quotationNo) {
-      quotationNo = await getNextSequence('QUOTATION');
+      // If not provided, we must consume it
+      quotationNo = await consumeNextSequence('QUOTATION');
+    } else if (quotationNo === expectedNextNo) {
+      // If the provided number perfectly matches the expected next sequence, we safely consume it
+      await consumeNextSequence('QUOTATION');
     }
 
     // Check duplicate
@@ -68,6 +76,7 @@ router.post('/', async (req, res) => {
     if (existing) {
       return res.status(400).json({ message: `Quotation number "${quotationNo}" already exists! Duplicate numbers are not allowed.` });
     }
+
 
     // Calculate totals
     const calculatedItems = (items || []).map(item => {
@@ -186,9 +195,13 @@ router.patch('/:id/status', async (req, res) => {
 // DELETE /api/quotations/:id
 router.delete('/:id', async (req, res) => {
   try {
-    const quotation = await Quotation.findByIdAndDelete(req.params.id);
+    const quotation = await Quotation.findByIdAndUpdate(
+      req.params.id,
+      { isDeleted: true, deletedAt: new Date() },
+      { new: true }
+    );
     if (!quotation) return res.status(404).json({ message: 'Quotation not found' });
-    res.json({ message: 'Quotation deleted successfully' });
+    res.json({ message: 'Quotation moved to Recycle Bin' });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

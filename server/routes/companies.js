@@ -5,7 +5,7 @@ const Company = require('../models/Company');
 // GET /api/companies
 router.get('/', async (req, res) => {
   try {
-    const companies = await Company.find().sort({ isDefault: -1, name: 1 });
+    const companies = await Company.find({ isDeleted: { $ne: true } }).sort({ isDefault: -1, name: 1 });
     res.json(companies);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -73,9 +73,13 @@ router.put('/:id', async (req, res) => {
 // DELETE /api/companies/:id
 router.delete('/:id', async (req, res) => {
   try {
-    const company = await Company.findByIdAndDelete(req.params.id);
+    const company = await Company.findByIdAndUpdate(
+      req.params.id,
+      { isDeleted: true, deletedAt: new Date() },
+      { new: true }
+    );
     if (!company) return res.status(404).json({ message: 'Company not found' });
-    res.json({ message: 'Company removed' });
+    res.json({ message: 'Company moved to Recycle Bin' });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

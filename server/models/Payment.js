@@ -36,7 +36,11 @@ const PaymentSchema = new mongoose.Schema({
   recordedBy: {
     type: String,
     default: 'Admin'
-  }
+  },
+  isDeleted: { type: Boolean, default: false },
+  deletedAt: { type: Date, default: null }
 }, { timestamps: true });
+
+PaymentSchema.index({ deletedAt: 1 }, { expireAfterSeconds: 30 * 24 * 60 * 60 });
 
 module.exports = mongoose.model('Payment', PaymentSchema);

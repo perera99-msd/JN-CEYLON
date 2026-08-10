@@ -8,15 +8,19 @@ const dotenv = require('dotenv');
 dotenv.config();
 
 const connectDB = require('./config/db');
+const seedAdmin = require('./services/seedAdmin');
+const { protect } = require('./middleware/authMiddleware');
 
 const app = express();
 
-// Connect Database
-connectDB();
+// Connect Database & Seed Admin
+connectDB().then(() => {
+  seedAdmin();
+});
 
 // Middleware
 app.use(cors({
-  origin: 'http://localhost:5173',
+  origin: true,
   credentials: true
 }));
 
@@ -40,14 +44,19 @@ app.use(session({
   }
 }));
 
-// API Routes Placeholder
+// Auth & Public API Routes
 app.use('/api/auth', require('./routes/auth'));
-app.use('/api/companies', require('./routes/companies'));
-app.use('/api/quotations', require('./routes/quotations'));
-app.use('/api/invoices', require('./routes/invoices'));
-app.use('/api/statements', require('./routes/statements'));
-app.use('/api/payments', require('./routes/payments'));
-app.use('/api/dashboard', require('./routes/dashboard'));
+app.use('/api/users', require('./routes/users'));
+
+// Protected Data API Routes
+app.use('/api/quotations', protect, require('./routes/quotations'));
+app.use('/api/invoices', protect, require('./routes/invoices'));
+app.use('/api/statements', protect, require('./routes/statements'));
+app.use('/api/payments', protect, require('./routes/payments'));
+app.use('/api/companies', protect, require('./routes/companies'));
+app.use('/api/dashboard', protect, require('./routes/dashboard'));
+app.use('/api/custom-statements', protect, require('./routes/customStatements'));
+app.use('/api/recycle-bin', protect, require('./routes/recycleBin'));
 
 // Serve Static Assets in Production
 if (process.env.NODE_ENV === 'production') {
@@ -63,6 +72,14 @@ if (process.env.NODE_ENV === 'production') {
 
 const PORT = process.env.PORT || 5000;
 
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   console.log(`JN Ceylon ERP Server running in ${process.env.NODE_ENV || 'development'} mode on port ${PORT}`);
+});
+
+server.on('error', (err) => {
+  if (err.code === 'EADDRINUSE') {
+    console.error(`Port ${PORT} is currently in use. Nodemon will retry automatically.`);
+  } else {
+    console.error('Server error:', err);
+  }
 });

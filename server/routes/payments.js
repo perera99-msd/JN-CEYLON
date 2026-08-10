@@ -6,7 +6,7 @@ const Invoice = require('../models/Invoice');
 // GET /api/payments - List all payment transactions
 router.get('/', async (req, res) => {
   try {
-    const payments = await Payment.find()
+    const payments = await Payment.find({ isDeleted: { $ne: true } })
       .populate('invoice')
       .populate('company')
       .sort({ createdAt: -1 });
@@ -90,8 +90,8 @@ router.delete('/:id', async (req, res) => {
       await invoice.save();
     }
 
-    await Payment.findByIdAndDelete(req.params.id);
-    res.json({ message: 'Payment deleted and invoice balance reverted' });
+    await Payment.findByIdAndUpdate(req.params.id, { isDeleted: true, deletedAt: new Date() });
+    res.json({ message: 'Payment moved to Recycle Bin and invoice balance reverted' });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

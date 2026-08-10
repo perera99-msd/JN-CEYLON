@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import toast from 'react-hot-toast';
 import DashboardLayout from '../../components/layout/DashboardLayout';
 import { Plus, Search, Eye, Printer, Download, Edit3, Trash2, ArrowRight } from 'lucide-react';
 import { printDocumentInIframe } from '../../utils/print';
 import { useNavigate } from 'react-router-dom';
+import { useConfirm } from '../../contexts/ConfirmContext';
 
 const QuotationListPage = () => {
   const [quotations, setQuotations] = useState([]);
@@ -13,6 +15,7 @@ const QuotationListPage = () => {
   const [poModalItem, setPoModalItem] = useState(null);
   const [poNumberInput, setPoNumberInput] = useState('');
   const navigate = useNavigate();
+  const confirm = useConfirm();
 
   useEffect(() => {
     fetchQuotations();
@@ -38,12 +41,20 @@ const QuotationListPage = () => {
   };
 
   const handleDelete = async (id, quotationNo) => {
-    if (window.confirm(`Are you sure you want to delete quotation "${quotationNo}"?`)) {
+    const isConfirmed = await confirm({
+      title: 'Delete Quotation',
+      message: `Are you sure you want to delete quotation "${quotationNo}"? This action cannot be undone.`,
+      confirmText: 'Delete Quotation',
+      type: 'danger'
+    });
+
+    if (isConfirmed) {
       try {
         await axios.delete(`/api/quotations/${id}`);
+        toast.success(`Quotation "${quotationNo}" deleted successfully`);
         fetchQuotations();
       } catch (error) {
-        alert(error.response?.data?.message || 'Error deleting quotation');
+        toast.error(error.response?.data?.message || 'Error deleting quotation');
       }
     }
   };
@@ -51,7 +62,7 @@ const QuotationListPage = () => {
   const handleCreateInvoiceWithPO = async () => {
     if (!poModalItem) return;
     if (!poNumberInput.trim()) {
-      alert('Please enter the Purchase Order (PO) number received from the client.');
+      toast.error('Please enter the Purchase Order (PO) number received from the client.');
       return;
     }
 
@@ -59,12 +70,12 @@ const QuotationListPage = () => {
       const res = await axios.post(`/api/invoices/from-quotation/${poModalItem._id}`, {
         poNumber: poNumberInput.trim()
       });
-      alert(`Invoice "${res.data.invoiceNo}" created successfully from Quotation "${poModalItem.quotationNo}"!`);
+      toast.success(`Invoice "${res.data.invoiceNo}" created successfully from Quotation "${poModalItem.quotationNo}"!`);
       setPoModalItem(null);
       setPoNumberInput('');
       navigate(`/invoices/edit/${res.data._id}`);
     } catch (error) {
-      alert(error.response?.data?.message || 'Error creating invoice');
+      toast.error(error.response?.data?.message || 'Error creating invoice');
     }
   };
 
@@ -90,14 +101,7 @@ const QuotationListPage = () => {
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            style={{
-              padding: '10px 12px',
-              backgroundColor: 'var(--bg-card)',
-              border: '1px solid var(--border-color)',
-              color: '#fff',
-              borderRadius: '6px',
-              fontWeight: 500
-            }}
+            className="filter-select"
           >
             <option value="ALL">All Statuses</option>
             <option value="DRAFT">Draft</option>

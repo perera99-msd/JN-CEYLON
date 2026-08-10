@@ -7,9 +7,9 @@ const Payment = require('../models/Payment');
 // GET /api/dashboard/stats - Overview KPI metrics
 router.get('/stats', async (req, res) => {
   try {
-    const quotations = await Quotation.find();
-    const invoices = await Invoice.find();
-    const payments = await Payment.find();
+    const quotations = await Quotation.find({ isDeleted: { $ne: true } });
+    const invoices = await Invoice.find({ isDeleted: { $ne: true } });
+    const payments = await Payment.find({ isDeleted: { $ne: true } });
 
     const totalQuotationValue = quotations.reduce((sum, q) => sum + (q.grandTotal || 0), 0);
     const totalInvoiceValue = invoices.reduce((sum, inv) => sum + (inv.grandTotal || 0), 0);
@@ -19,9 +19,9 @@ router.get('/stats', async (req, res) => {
     const pendingInvoicesCount = invoices.filter(inv => inv.status !== 'PAID').length;
     const paidInvoicesCount = invoices.filter(inv => inv.status === 'PAID').length;
 
-    const recentQuotations = await Quotation.find().populate('company').sort({ createdAt: -1 }).limit(5);
-    const recentInvoices = await Invoice.find().populate('company').sort({ createdAt: -1 }).limit(5);
-    const recentPayments = await Payment.find().populate('company').populate('invoice').sort({ createdAt: -1 }).limit(5);
+    const recentQuotations = await Quotation.find({ isDeleted: { $ne: true } }).populate('company').sort({ createdAt: -1 }).limit(5);
+    const recentInvoices = await Invoice.find({ isDeleted: { $ne: true } }).populate('company').sort({ createdAt: -1 }).limit(5);
+    const recentPayments = await Payment.find({ isDeleted: { $ne: true } }).populate('company').populate('invoice').sort({ createdAt: -1 }).limit(5);
 
     res.json({
       metrics: {

@@ -1,28 +1,30 @@
 const express = require('express');
 const router = express.Router();
 const User = require('../models/User');
+const { protect } = require('../middleware/authMiddleware');
 
 // POST /api/auth/login
 router.post('/login', async (req, res) => {
   try {
     const { username, password } = req.body;
     if (!username || !password) {
-      return res.status(400).json({ message: 'Please provide username and password' });
+      return res.status(400).json({ message: 'Please provide both username and password' });
     }
 
-    const user = await User.findOne({ username });
+    const user = await User.findOne({ 
+      username: { $regex: new RegExp(`^${username.trim()}$`, 'i') } 
+    });
     if (!user) {
-      return res.status(401).json({ message: 'Invalid credentials' });
+      return res.status(401).json({ message: 'Invalid username or password' });
     }
 
     const isMatch = await user.matchPassword(password);
     if (!isMatch) {
-      return res.status(401).json({ message: 'Invalid credentials' });
+      return res.status(401).json({ message: 'Invalid username or password' });
     }
 
+    // Save user ID to session
     req.session.userId = user._id;
-    req.session.userRole = user.role;
-    req.session.username = user.username;
 
     res.json({
       _id: user._id,
@@ -35,6 +37,16 @@ router.post('/login', async (req, res) => {
   }
 });
 
+// GET /api/auth/me
+router.get('/me', protect, async (req, res) => {
+  res.json({
+    _id: req.user._id,
+    username: req.user.username,
+    fullName: req.user.fullName,
+    role: req.user.role
+  });
+});
+
 // POST /api/auth/logout
 router.post('/logout', (req, res) => {
   req.session.destroy((err) => {
@@ -44,20 +56,6 @@ router.post('/logout', (req, res) => {
     res.clearCookie('connect.sid');
     res.json({ message: 'Logged out successfully' });
   });
-});
-
-// GET /api/auth/me
-router.get('/me', async (req, res) => {
-  if (req.session && req.session.userId) {
-    try {
-      const user = await User.findById(req.session.userId).select('-passwordHash');
-      if (user) {
-        return res.json(user);
-      }
-    } catch (e) {}
-  }
-  // Return mock admin if dev or unauthenticated initial state for smooth experience
-  res.json({ _id: 'admin', username: 'admin', fullName: 'JN Admin', role: 'ADMIN' });
 });
 
 module.exports = router;
