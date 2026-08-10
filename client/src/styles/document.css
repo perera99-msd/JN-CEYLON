@@ -1,0 +1,298 @@
+/* Force browsers to render colors exactly as seen on screen when printing */
+* {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+}
+
+/* EXACT A4 DOCUMENT CSS - STRICT STYLING */
+.a4-page {
+    width: 210mm;
+    height: 297mm;
+    background: #ffffff;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+    margin-bottom: 30px;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    font-family: "Times New Roman", Times, serif; 
+    color: #000;
+}
+
+/* 1. BLACK HEADER SECTION */
+.header-black-bg {
+    background-color: #0a0a0a;
+    color: #ffffff;
+    padding: 8mm 12mm 3mm 12mm; 
+}
+.header-top-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+.logo-col img {
+    width: 145px;
+    height: auto;
+    margin-top: 0px;
+}
+.address-col {
+    font-size: 12px;
+    font-weight: bold;
+    line-height: 1.4;
+    flex-grow: 1;
+    padding-left: 25px;
+    padding-top: 5px;
+}
+.title-col {
+    padding-top: 5px;
+}
+.title-box {
+    background-color: #ffffff;
+    color: #000000;
+    font-size: 32px;
+    font-weight: bold;
+    height: 55px; 
+    padding: 6px 25px 0 25px; 
+    box-sizing: border-box; 
+    text-align: center;
+    display: flex; 
+    align-items: center;
+    justify-content: center;
+}
+.header-divider {
+    border: none;
+    border-top: 1px solid #333;
+    margin: 10px 0 8px 0;
+}
+.tagline {
+    color: #e67e22; 
+    font-size: 13px;
+    font-weight: bold;
+    text-align: center;
+    padding-bottom: 2px;
+}
+
+/* 2. WHITE BODY SECTION */
+.doc-body {
+    padding: 3mm 12mm 15mm 12mm; 
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    background-color: #ffffff;
+}
+
+/* META SECTION */
+.meta-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 10px;
+    font-size: 14px;
+    font-weight: bold;
+    line-height: 1.4;
+}
+.bill-to-section {
+    display: flex;
+}
+.bill-label {
+    margin-right: 15px;
+}
+.no-border-table {
+    border-collapse: collapse;
+    font-weight: bold;
+    font-size: 14px;
+}
+.no-border-table td {
+    padding: 1px 5px;
+    vertical-align: top;
+}
+.no-border-table td:first-child {
+    width: 120px;
+}
+
+/* TABLE SECTION */
+.greeting-text {
+    font-size: 14px;
+    font-weight: bold;
+    margin-bottom: 8px;
+}
+.doc-table-wrapper {
+    flex-grow: 0; 
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 8px;
+}
+.exact-table {
+    width: 100%;
+    height: auto;
+    border-collapse: collapse;
+    border: 1px solid #000;
+    table-layout: fixed;
+}
+.exact-table th {
+    background-color: #000000;
+    color: #ffffff;
+    border: 1px solid #000;
+    font-size: 12px;
+    padding: 6px 4px;
+    font-weight: bold;
+    text-align: center;
+}
+.exact-table td {
+    border: 1px solid #000;
+    font-size: 13px;
+    font-weight: bold;
+    text-align: center;
+    vertical-align: middle;
+    padding: 4px 5px;
+    overflow: hidden;
+    word-break: break-word; 
+    overflow-wrap: break-word; 
+}
+
+/* ACCOUNT STATEMENT SPECIFIC OVERRIDES */
+.statement-wrapper {
+    flex-grow: 0 !important; 
+}
+.statement-table {
+    height: auto !important; 
+}
+.statement-table tbody tr {
+    height: 30px; 
+}
+.statement-table tbody tr:nth-child(odd) td {
+    background-color: #f2f2f2 !important; 
+}
+.statement-table tbody tr:nth-child(even) td {
+    background-color: #ffffff !important; 
+}
+
+/* Image Display in Table */
+.item-thumbnail {
+    max-height: 52px;
+    max-width: 90px;
+    object-fit: contain;
+    margin-top: 3px;
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+/* FOOTER SECTION */
+.doc-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    font-size: 14px;
+    font-weight: bold;
+    margin-top: auto;
+}
+
+.doc-terms-table {
+    border-collapse: collapse;
+    font-size: 13px;
+    font-weight: bold;
+    margin-bottom: 6px;
+}
+.doc-terms-table td {
+    padding: 1px 0;
+    vertical-align: top;
+}
+.doc-terms-table td:first-child {
+    width: 110px;
+}
+
+.payment-heading {
+    text-decoration: underline;
+    font-size: 14px;
+    margin-bottom: 3px;
+    font-weight: bold;
+}
+
+/* Totals Table */
+.totals-table {
+    width: 250px;
+    border-collapse: collapse;
+    border: 1px solid #000;
+}
+.totals-table tr {
+    height: 22px;
+}
+.totals-table td {
+    font-size: 13px;
+    font-weight: bold;
+    padding: 3px 8px;
+}
+.totals-table td:first-child {
+    background-color: #000;
+    color: #fff;
+    text-align: left;
+    padding-left: 10px;
+    width: 45%;
+    border: 1px solid #000;
+}
+.totals-table td:last-child {
+    background-color: #fff;
+    color: #000;
+    text-align: center;
+    border: 1px solid #000;
+    width: 55%;
+}
+
+.thank-you-row {
+    position: relative;
+    margin-top: 6px;
+    display: flex;
+    justify-content: center;
+    align-items: baseline;
+}
+.thank-you-text {
+    font-size: 18px;
+    font-style: italic;
+    font-weight: bold;
+    letter-spacing: 1px;
+    margin: 0;
+}
+
+.page-number {
+    position: absolute;
+    right: 12mm; 
+    bottom: 3mm; 
+    font-size: 11px;
+    font-weight: bold;
+    background: #ffffff;
+    padding: 1px 4px;
+}
+
+/* PERFECT PRINT OVERRIDES */
+@media print {
+    @page {
+        size: A4 portrait;
+        margin: 0mm; 
+    }
+    body { 
+        background: none; 
+        display: block; 
+        height: auto; 
+        overflow: visible; 
+    }
+    .no-print, #sidebar, .sidebar-container, header { display: none !important; }
+    .print-workspace, #preview-workspace { 
+        padding: 0; 
+        margin: 0;
+        background: none; 
+        display: block; 
+        overflow: visible; 
+        width: 100%;
+    }
+    .a4-page { 
+        box-shadow: none !important; 
+        margin: 0 !important; 
+        width: 210mm !important;
+        height: 297mm !important;
+        page-break-after: always; 
+        page-break-inside: avoid;
+    }
+    .a4-page:last-child {
+        page-break-after: auto; 
+    }
+}
