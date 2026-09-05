@@ -5,6 +5,36 @@ const Quotation = require('../models/Quotation');
 const Payment = require('../models/Payment');
 const { previewNextSequence, consumeNextSequence } = require('../services/sequenceService');
 const { logActivity } = require('../services/activityLogger');
+const { parseDateString, isPastDueDate } = require('../services/overdueChecker');
+
+/**
+ * Calculates a date string 1 month ahead from the given base date (DD.MM.YYYY).
+ */
+const getOneMonthAhead = (baseDateStr) => {
+  let dateObj = new Date();
+  if (baseDateStr && typeof baseDateStr === 'string') {
+    const parsed = parseDateString(baseDateStr);
+    if (parsed) dateObj = parsed;
+  }
+  const due = new Date(dateObj);
+  due.setMonth(due.getMonth() + 1);
+  return due.toLocaleDateString('en-GB').replace(/\//g, '.');
+};
+
+/**
+ * Helper to reconcile an invoice's overdue/pending status in-place.
+ */
+const reconcileInvoiceStatus = async (inv) => {
+  if (!inv || !['PENDING', 'PARTIAL', 'OVERDUE'].includes(inv.status)) return;
+  const past = isPastDueDate(inv.dueDate);
+  if (!past && inv.status === 'OVERDUE') {
+    inv.status = (inv.amountPaid > 0) ? 'PARTIAL' : 'PENDING';
+    await Invoice.updateOne({ _id: inv._id }, { status: inv.status });
+  } else if (past && inv.status !== 'OVERDUE' && inv.balanceDue > 0) {
+    inv.status = 'OVERDUE';
+    await Invoice.updateOne({ _id: inv._id }, { status: 'OVERDUE' });
+  }
+};
 
 // GET /api/invoices - List with filters and optional pagination
 router.get('/', async (req, res) => {
@@ -39,6 +69,10 @@ router.get('/', async (req, res) => {
         .skip(skip)
         .limit(limitNum);
 
+      for (const inv of invoices) {
+        await reconcileInvoiceStatus(inv);
+      }
+
       return res.json({
         data: invoices,
         pagination: {
@@ -54,6 +88,10 @@ router.get('/', async (req, res) => {
       .populate('company')
       .populate('quotation')
       .sort({ createdAt: -1 });
+
+    for (const inv of invoices) {
+      await reconcileInvoiceStatus(inv);
+    }
 
     res.json(invoices);
   } catch (error) {
@@ -108,6 +146,9 @@ router.get('/:id', async (req, res) => {
       .populate('company')
       .populate('quotation');
     if (!invoice) return res.status(404).json({ message: 'Invoice not found' });
+
+    await reconcileInvoiceStatus(invoice);
+
     res.json(invoice);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -145,28 +186,14 @@ router.post('/', async (req, res) => {
     });
 
     const subtotal = calculatedItems.reduce((sum, item) => sum + item.total, 0);
+    const finalDueDate = dueDate || getOneMonthAhead(date);
 
-/**
- * Calculates a date string 1 month ahead from the given base date (DD.MM.YYYY).
- */
-const getOneMonthAhead = (baseDateStr) => {
-  let dateObj = new Date();
-  if (baseDateStr && typeof baseDateStr === 'string' && baseDateStr.includes('.')) {
-    const parts = baseDateStr.split('.');
-    if (parts.length === 3) {
-      const d = parseInt(parts[0], 10);
-      const m = parseInt(parts[1], 10) - 1;
-      const y = parseInt(parts[2], 10);
-      const parsed = new Date(y, m, d);
-      if (!isNaN(parsed.getTime())) {
-        dateObj = parsed;
+    let initialStatus = status || 'PENDING';
+    if (initialStatus !== 'DRAFT') {
+      if (isPastDueDate(finalDueDate)) {
+        initialStatus = 'OVERDUE';
       }
     }
-  }
-  const due = new Date(dateObj);
-  due.setMonth(due.getMonth() + 1);
-  return due.toLocaleDateString('en-GB').replace(/\//g, '.');
-};
 
     const invoice = new Invoice({
       invoiceNo: invoiceNo.trim(),
@@ -182,9 +209,9 @@ const getOneMonthAhead = (baseDateStr) => {
       grandTotal: subtotal,
       amountPaid: 0,
       balanceDue: subtotal,
-      dueDate: dueDate || getOneMonthAhead(date),
+      dueDate: finalDueDate,
       terms,
-      status: status || 'PENDING'
+      status: initialStatus
     });
 
     await invoice.save();
@@ -228,6 +255,7 @@ router.post('/from-quotation/:quotationId', async (req, res) => {
     }
 
     const todayStr = new Date().toLocaleDateString('en-GB').replace(/\//g, '.');
+    const finalDueDate = dueDate || getOneMonthAhead(todayStr);
 
     const invoice = new Invoice({
       invoiceNo: nextInvNo.trim(),
@@ -243,9 +271,9 @@ router.post('/from-quotation/:quotationId', async (req, res) => {
       grandTotal: quotation.grandTotal,
       amountPaid: 0,
       balanceDue: quotation.grandTotal,
-      dueDate: dueDate || getOneMonthAhead(todayStr),
+      dueDate: finalDueDate,
       terms: quotation.terms,
-      status: 'PENDING'
+      status: isPastDueDate(finalDueDate) ? 'OVERDUE' : 'PENDING'
     });
 
     await invoice.save();
@@ -258,11 +286,11 @@ router.post('/from-quotation/:quotationId', async (req, res) => {
 
     logActivity({
       req,
-      action: 'CREATE',
+      action: 'CONVERT',
       entityType: 'INVOICE',
       entityId: invoice._id,
       entityIdentifier: invoice.invoiceNo,
-      description: `Created invoice ${invoice.invoiceNo} from quotation ${quotation.quotationNo}`
+      description: `Converted quotation ${quotation.quotationNo} to invoice ${invoice.invoiceNo}`
     });
 
     const populated = await Invoice.findById(invoice._id).populate('company').populate('quotation');
@@ -272,20 +300,10 @@ router.post('/from-quotation/:quotationId', async (req, res) => {
   }
 });
 
-// PUT /api/invoices/:id - Edit invoice
+// PUT /api/invoices/:id - Update invoice
 router.put('/:id', async (req, res) => {
   try {
-    const { invoiceNo, date, company, custCode, preparedBy, poNumber, quotationNo, items, terms, dueDate, status } = req.body;
-
-    if (invoiceNo) {
-      const existing = await Invoice.findOne({
-        invoiceNo: invoiceNo.trim(),
-        _id: { $ne: req.params.id }
-      });
-      if (existing) {
-        return res.status(400).json({ message: `Invoice number "${invoiceNo}" already belongs to another invoice!` });
-      }
-    }
+    const { date, invoiceNo, company, custCode, preparedBy, poNumber, quotationNo, items, terms, dueDate, status } = req.body;
 
     const calculatedItems = (items || []).map(item => {
       const qty = parseFloat(item.qty || 0);
@@ -309,8 +327,13 @@ router.put('/:id', async (req, res) => {
     let calculatedStatus = status || existingInv.status;
     if (balanceDue === 0 && subtotal > 0) {
       calculatedStatus = 'PAID';
-    } else if (amountPaid > 0 && balanceDue > 0) {
-      calculatedStatus = 'PARTIAL';
+    } else if (['PENDING', 'PARTIAL', 'OVERDUE'].includes(calculatedStatus)) {
+      const effectiveDue = dueDate || existingInv.dueDate;
+      if (effectiveDue && isPastDueDate(effectiveDue)) {
+        calculatedStatus = 'OVERDUE';
+      } else {
+        calculatedStatus = (amountPaid > 0) ? 'PARTIAL' : 'PENDING';
+      }
     }
 
     const updateData = {
@@ -347,12 +370,23 @@ router.put('/:id', async (req, res) => {
 router.patch('/:id/due-date', async (req, res) => {
   try {
     const { dueDate } = req.body;
-    const invoice = await Invoice.findByIdAndUpdate(
-      req.params.id,
-      { dueDate },
-      { new: true }
-    ).populate('company').populate('quotation');
+    const invoice = await Invoice.findById(req.params.id)
+      .populate('company')
+      .populate('quotation');
     if (!invoice) return res.status(404).json({ message: 'Invoice not found' });
+
+    invoice.dueDate = dueDate;
+
+    // Immediately re-evaluate overdue status if not PAID/DRAFT
+    if (['PENDING', 'PARTIAL', 'OVERDUE'].includes(invoice.status)) {
+      if (isPastDueDate(dueDate)) {
+        invoice.status = 'OVERDUE';
+      } else {
+        invoice.status = (invoice.amountPaid && invoice.amountPaid > 0) ? 'PARTIAL' : 'PENDING';
+      }
+    }
+
+    await invoice.save();
     res.json(invoice);
   } catch (error) {
     res.status(400).json({ message: error.message });

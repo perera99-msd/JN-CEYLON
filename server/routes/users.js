@@ -3,6 +3,7 @@ const router = express.Router();
 const User = require('../models/User');
 const bcrypt = require('bcryptjs');
 const { protect, adminOnly } = require('../middleware/authMiddleware');
+const { logActivity } = require('../services/activityLogger');
 
 // All routes here require Admin rights
 router.use(protect, adminOnly);
@@ -26,6 +27,10 @@ router.post('/', async (req, res) => {
       return res.status(400).json({ message: 'Username, Full Name, and Password are required' });
     }
 
+    if (password.trim().length < 6) {
+      return res.status(400).json({ message: 'Password must be at least 6 characters long' });
+    }
+
     const existingUser = await User.findOne({ username: username.trim() });
     if (existingUser) {
       return res.status(400).json({ message: 'Username already exists' });
@@ -34,11 +39,20 @@ router.post('/', async (req, res) => {
     const newUser = new User({
       username: username.trim(),
       fullName: fullName.trim(),
-      password,
+      password: password.trim(),
       role: role === 'ADMIN' ? 'ADMIN' : 'NORMAL'
     });
 
     await newUser.save();
+
+    logActivity({
+      req,
+      action: 'CREATE',
+      entityType: 'USER',
+      entityId: newUser._id,
+      entityIdentifier: newUser.username,
+      description: `Created user account "${newUser.username}" (${newUser.role})`
+    });
 
     res.status(201).json({
       _id: newUser._id,
@@ -66,11 +80,25 @@ router.put('/:id', async (req, res) => {
       user.role = role;
     }
 
+    let passwordChanged = false;
     if (password && password.trim() !== '') {
-      user.password = password; // pre-save hook will hash it
+      if (password.trim().length < 6) {
+        return res.status(400).json({ message: 'Password must be at least 6 characters long' });
+      }
+      user.password = password.trim(); // pre-save hook will hash it
+      passwordChanged = true;
     }
 
     await user.save();
+
+    logActivity({
+      req,
+      action: 'UPDATE',
+      entityType: 'USER',
+      entityId: user._id,
+      entityIdentifier: user.username,
+      description: `Updated user "${user.username}"${passwordChanged ? ' (including password change)' : ''}`
+    });
 
     res.json({
       _id: user._id,
@@ -94,6 +122,15 @@ router.delete('/:id', async (req, res) => {
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
+
+    logActivity({
+      req,
+      action: 'DELETE',
+      entityType: 'USER',
+      entityId: user._id,
+      entityIdentifier: user.username,
+      description: `Deleted user account "${user.username}"`
+    });
 
     res.json({ message: 'User deleted successfully' });
   } catch (error) {
