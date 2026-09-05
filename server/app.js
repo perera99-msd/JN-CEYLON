@@ -4,19 +4,46 @@ const cors = require('cors');
 const session = require('express-session');
 const MongoStore = require('connect-mongo');
 const mongoose = require('mongoose');
+const crypto = require('crypto');
 
 const { protect } = require('./middleware/authMiddleware');
 
 const createApp = ({ useMongoSessionStore = true } = {}) => {
   const app = express();
+  const isProduction = process.env.NODE_ENV === 'production';
+  const configuredOrigins = (process.env.CORS_ORIGINS || (isProduction ? '' : 'http://localhost:5173'))
+    .split(',')
+    .map(origin => origin.trim())
+    .filter(Boolean);
+
+  if (isProduction && configuredOrigins.length === 0) {
+    throw new Error('CORS_ORIGINS must be configured in production');
+  }
+
+  const allowedOrigins = new Set(configuredOrigins);
 
   app.use(cors({
-    origin: true,
+    origin: (origin, callback) => {
+      callback(null, !origin || allowedOrigins.has(origin));
+    },
     credentials: true
   }));
 
   app.use(express.json({ limit: '10mb' }));
   app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+  app.use((req, res, next) => {
+    if (!['POST', 'PUT', 'PATCH', 'DELETE'].includes(req.method)) {
+      return next();
+    }
+
+    const origin = req.get('origin');
+    if (!origin || allowedOrigins.has(origin)) {
+      return next();
+    }
+
+    return res.status(403).json({ message: 'Request origin is not allowed' });
+  });
 
   app.get('/api/health', (req, res) => {
     res.json({ status: 'ok' });
@@ -30,15 +57,24 @@ const createApp = ({ useMongoSessionStore = true } = {}) => {
     });
   });
 
+  const sessionSecret = process.env.SESSION_SECRET;
+  if (isProduction && !sessionSecret) {
+    throw new Error('SESSION_SECRET must be configured in production');
+  }
+
+  if (isProduction) {
+    app.set('trust proxy', 1);
+  }
+
   const sessionOptions = {
-    secret: process.env.SESSION_SECRET || 'jn_ceylon_secret',
+    secret: sessionSecret || crypto.randomBytes(32).toString('hex'),
     resave: false,
     saveUninitialized: false,
     cookie: {
       maxAge: 14 * 24 * 60 * 60 * 1000,
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax'
+      secure: isProduction,
+      sameSite: process.env.COOKIE_SAME_SITE || 'lax'
     }
   };
 

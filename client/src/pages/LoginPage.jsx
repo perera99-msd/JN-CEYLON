@@ -4,8 +4,8 @@ import { useNavigate } from 'react-router-dom';
 import { User, Lock, Eye, EyeOff, ShieldCheck, Sparkles } from 'lucide-react';
 
 const LoginPage = () => {
-  const [username, setUsername] = useState('AdminJN');
-  const [password, setPassword] = useState('Password123');
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
   const [error, setError] = useState('');
