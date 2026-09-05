@@ -5,11 +5,35 @@ const session = require('express-session');
 const MongoStore = require('connect-mongo');
 const mongoose = require('mongoose');
 const crypto = require('crypto');
+const compression = require('compression');
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
 
 const { protect } = require('./middleware/authMiddleware');
+const errorHandler = require('./middleware/errorHandler');
 
 const createApp = ({ useMongoSessionStore = true } = {}) => {
   const app = express();
+
+  // Security headers
+  app.use(helmet({
+    contentSecurityPolicy: false, // Disabled for SPA
+    crossOriginEmbedderPolicy: false
+  }));
+
+  // Response compression (60-80% smaller payloads)
+  app.use(compression());
+
+  // API rate limiting (100 requests per minute per IP)
+  const apiLimiter = rateLimit({
+    windowMs: 60 * 1000,
+    max: 100,
+    message: { message: 'Too many requests. Please slow down.' },
+    standardHeaders: true,
+    legacyHeaders: false,
+    skip: (req) => !req.path.startsWith('/api')
+  });
+  app.use(apiLimiter);
   const isProduction = process.env.NODE_ENV === 'production';
   const configuredOrigins = (process.env.CORS_ORIGINS || (isProduction ? '' : 'http://localhost:5173'))
     .split(',')
@@ -98,6 +122,8 @@ const createApp = ({ useMongoSessionStore = true } = {}) => {
   app.use('/api/dashboard', protect, require('./routes/dashboard'));
   app.use('/api/custom-statements', protect, require('./routes/customStatements'));
   app.use('/api/recycle-bin', protect, require('./routes/recycleBin'));
+  app.use('/api/activity', protect, require('./routes/activity'));
+  app.use('/api/search', protect, require('./routes/search'));
 
   if (process.env.NODE_ENV === 'production') {
     app.use(express.static(path.join(__dirname, '../client/dist')));
@@ -109,6 +135,9 @@ const createApp = ({ useMongoSessionStore = true } = {}) => {
       res.send('JN Ceylon ERP API Server Running...');
     });
   }
+
+  // Global error handler (must be last)
+  app.use(errorHandler);
 
   return app;
 };

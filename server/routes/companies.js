@@ -2,10 +2,34 @@ const express = require('express');
 const router = express.Router();
 const Company = require('../models/Company');
 
-// GET /api/companies
+// GET /api/companies - List companies with optional pagination
 router.get('/', async (req, res) => {
   try {
-    const companies = await Company.find({ isDeleted: { $ne: true } }).sort({ isDefault: -1, name: 1 });
+    const { page, limit } = req.query;
+    const query = { isDeleted: { $ne: true } };
+
+    if (page) {
+      const pageNum = Math.max(1, parseInt(page, 10) || 1);
+      const limitNum = Math.min(100, Math.max(1, parseInt(limit, 10) || 15));
+      const skip = (pageNum - 1) * limitNum;
+      const total = await Company.countDocuments(query);
+      const companies = await Company.find(query)
+        .sort({ isDefault: -1, name: 1 })
+        .skip(skip)
+        .limit(limitNum);
+
+      return res.json({
+        data: companies,
+        pagination: {
+          page: pageNum,
+          limit: limitNum,
+          total,
+          pages: Math.ceil(total / limitNum)
+        }
+      });
+    }
+
+    const companies = await Company.find(query).sort({ isDefault: -1, name: 1 });
     res.json(companies);
   } catch (error) {
     res.status(500).json({ message: error.message });

@@ -21,6 +21,10 @@ import CompanyListPage from './pages/companies/CompanyListPage';
 import RecycleBinPage from './pages/RecycleBinPage';
 import SettingsPage from './pages/SettingsPage';
 
+import ActivityLogPage from './pages/ActivityLogPage';
+import ChangePasswordModal from './components/common/ChangePasswordModal';
+import GlobalSearchModal from './components/common/GlobalSearchModal';
+
 import PrintQuotation from './pages/print/PrintQuotation';
 import PrintInvoice from './pages/print/PrintInvoice';
 import PrintStatement from './pages/print/PrintStatement';
@@ -35,6 +39,8 @@ function App() {
       <ConfirmProvider>
         <Toaster position="bottom-right" toastOptions={{ duration: 3000 }} />
         <BrowserRouter>
+          <GlobalSearchModal />
+          <ChangePasswordModal />
           <Routes>
             <Route path="/login" element={<LoginPage />} />
 
@@ -58,6 +64,7 @@ function App() {
 
             <Route path="/payments" element={<PrivateRoute><PaymentListPage /></PrivateRoute>} />
             <Route path="/companies" element={<PrivateRoute><CompanyListPage /></PrivateRoute>} />
+            <Route path="/activity" element={<PrivateRoute><ActivityLogPage /></PrivateRoute>} />
             <Route path="/recycle-bin" element={<PrivateRoute><RecycleBinPage /></PrivateRoute>} />
 
             {/* Admin-Only Settings Route */}

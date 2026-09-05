@@ -2,15 +2,71 @@ const express = require('express');
 const router = express.Router();
 const Payment = require('../models/Payment');
 const Invoice = require('../models/Invoice');
+const { logActivity } = require('../services/activityLogger');
 
-// GET /api/payments - List all payment transactions
+// GET /api/payments - List all payment transactions with optional pagination
 router.get('/', async (req, res) => {
+  try {
+    const { page, limit } = req.query;
+    const query = { isDeleted: { $ne: true } };
+
+    if (page) {
+      const pageNum = Math.max(1, parseInt(page, 10) || 1);
+      const limitNum = Math.min(100, Math.max(1, parseInt(limit, 10) || 15));
+      const skip = (pageNum - 1) * limitNum;
+      const total = await Payment.countDocuments(query);
+      const payments = await Payment.find(query)
+        .populate('invoice')
+        .populate('company')
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limitNum);
+
+      return res.json({
+        data: payments,
+        pagination: {
+          page: pageNum,
+          limit: limitNum,
+          total,
+          pages: Math.ceil(total / limitNum)
+        }
+      });
+    }
+
+    const payments = await Payment.find(query)
+      .populate('invoice')
+      .populate('company')
+      .sort({ createdAt: -1 });
+    res.json(payments);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// GET /api/payments/export - Export payments as CSV
+router.get('/export', async (req, res) => {
   try {
     const payments = await Payment.find({ isDeleted: { $ne: true } })
       .populate('invoice')
       .populate('company')
       .sort({ createdAt: -1 });
-    res.json(payments);
+
+    const headers = ['Payment Date', 'Invoice No', 'Company', 'Amount (USD)', 'Method', 'Reference', 'Recorded By', 'Notes'];
+    const rows = payments.map(pay => [
+      pay.date || '',
+      pay.invoice?.invoiceNo || '',
+      `"${(pay.company?.name || '').replace(/"/g, '""')}"`,
+      (pay.amount || 0).toFixed(2),
+      pay.method || '',
+      `"${(pay.reference || '').replace(/"/g, '""')}"`,
+      `"${(pay.recordedBy || '').replace(/"/g, '""')}"`,
+      `"${(pay.notes || '').replace(/"/g, '""')}"`
+    ]);
+
+    const csvContent = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', `attachment; filename="payments_${new Date().toISOString().slice(0, 10)}.csv"`);
+    res.status(200).send(csvContent);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -61,6 +117,15 @@ router.post('/', async (req, res) => {
     invoice.balanceDue = newBalanceDue;
     invoice.status = newStatus;
     await invoice.save();
+
+    logActivity({
+      req,
+      action: 'PAYMENT',
+      entityType: 'PAYMENT',
+      entityId: payment._id,
+      entityIdentifier: invoice.invoiceNo,
+      description: `Recorded payment of $${payAmount.toFixed(2)} (${payment.method}) for invoice ${invoice.invoiceNo}`
+    });
 
     const populatedPayment = await Payment.findById(payment._id).populate('invoice').populate('company');
     res.status(201).json(populatedPayment);

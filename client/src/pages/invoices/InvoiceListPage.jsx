@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 import DashboardLayout from '../../components/layout/DashboardLayout';
+import Pagination from '../../components/common/Pagination';
+import SkeletonTable from '../../components/common/SkeletonTable';
 import { Plus, Search, Filter, Eye, Printer, Edit3, Trash2, DollarSign, CreditCard, Download, Calendar } from 'lucide-react';
 import { printDocumentInIframe } from '../../utils/print';
 import { useNavigate } from 'react-router-dom';
@@ -12,6 +14,7 @@ const InvoiceListPage = () => {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
+  const [pagination, setPagination] = useState({ page: 1, limit: 15, total: 0, pages: 1 });
   
   // Payment Modal State
   const [paymentModalItem, setPaymentModalItem] = useState(null);
@@ -28,21 +31,35 @@ const InvoiceListPage = () => {
   const confirm = useConfirm();
 
   useEffect(() => {
-    fetchInvoices();
+    fetchInvoices(1);
   }, [statusFilter]);
 
-  const fetchInvoices = async () => {
+  const fetchInvoices = async (targetPage = 1) => {
     try {
       setLoading(true);
       const res = await axios.get('/api/invoices', {
-        params: { status: statusFilter, search }
+        params: {
+          status: statusFilter,
+          search: search.trim() || undefined,
+          page: targetPage,
+          limit: 15
+        }
       });
-      setInvoices(res.data);
+      if (res.data.pagination) {
+        setInvoices(res.data.data || []);
+        setPagination(res.data.pagination);
+      } else {
+        setInvoices(res.data || []);
+      }
     } catch (error) {
       console.error('Error fetching invoices:', error);
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleExportCSV = () => {
+    window.open('/api/invoices/export', '_blank');
   };
 
   const handleOpenDueDateModal = (inv) => {
@@ -131,8 +148,8 @@ const InvoiceListPage = () => {
   return (
     <DashboardLayout title="Invoices & Ledger Management">
       {/* Top Controls */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-        <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', flexWrap: 'wrap', gap: '12px' }}>
+        <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
           <form onSubmit={handleSearch} style={{ display: 'flex', gap: '8px' }}>
             <div className="form-group" style={{ margin: 0, minWidth: '240px' }}>
               <input
@@ -160,106 +177,133 @@ const InvoiceListPage = () => {
           </select>
         </div>
 
-        <button onClick={() => navigate('/invoices/new')} className="btn-primary">
-          <Plus size={16} /> Create Invoice
-        </button>
+        <div style={{ display: 'flex', gap: '10px' }}>
+          <button onClick={handleExportCSV} className="btn-secondary" title="Export as CSV spreadsheet">
+            <Download size={16} /> Export CSV
+          </button>
+          <button onClick={() => navigate('/invoices/new')} className="btn-primary">
+            <Plus size={16} /> Create Invoice
+          </button>
+        </div>
       </div>
 
       {/* Table */}
       <div className="table-container">
-        <table className="data-table">
-          <thead>
-            <tr>
-              <th>Invoice No</th>
-              <th>PO Number</th>
-              <th>Date</th>
-              <th>Due Date</th>
-              <th>Customer</th>
-              <th>Status</th>
-              <th>Total ($)</th>
-              <th>Balance Due ($)</th>
-              <th style={{ textAlign: 'right' }}>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {invoices.length > 0 ? (
-              invoices.map((inv) => (
-                <tr key={inv._id}>
-                  <td style={{ fontWeight: 'bold', color: 'var(--accent-orange)' }}>{inv.invoiceNo}</td>
-                  <td style={{ fontWeight: 'bold' }}>{inv.poNumber}</td>
-                  <td>{inv.date}</td>
-                  <td>{inv.dueDate || inv.date}</td>
-                  <td>{inv.company?.name || 'Constance Halaveli'}</td>
-                  <td>
-                    <span className={`badge badge-${inv.status.toLowerCase()}`}>{inv.status}</span>
-                  </td>
-                  <td style={{ fontWeight: 'bold' }}>${(inv.grandTotal || 0).toFixed(2)}</td>
-                  <td style={{ fontWeight: 'bold', color: inv.balanceDue > 0 ? 'var(--accent-orange)' : 'var(--accent-green)' }}>
-                    ${(inv.balanceDue || 0).toFixed(2)}
-                  </td>
-                  <td style={{ textAlign: 'right' }}>
-                    <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
-                      {inv.balanceDue > 0 && (
-                        <button
-                          onClick={() => {
-                            setPaymentModalItem(inv);
-                            setPayAmount(inv.balanceDue.toFixed(2));
-                          }}
-                          className="btn-secondary"
-                          style={{ backgroundColor: 'rgba(16, 185, 129, 0.2)', color: '#34d399', border: '1px solid rgba(16, 185, 129, 0.4)' }}
-                          title="Record Payment"
-                        >
-                          <CreditCard size={14} /> Pay
-                        </button>
-                      )}
-                      <button
-                        onClick={() => navigate(`/invoices/view/${inv._id}`)}
-                        className="btn-secondary"
-                        title="View Document"
-                      >
-                        <Eye size={14} /> View
-                      </button>
-                      <button
-                        onClick={() => handleOpenDueDateModal(inv)}
-                        className="btn-secondary"
-                        title="Edit Due Date Calendar"
-                      >
-                        <Calendar size={14} /> Due Date
-                      </button>
-                      <button
-                        onClick={() => navigate(`/invoices/edit/${inv._id}`)}
-                        className="btn-secondary"
-                        title="Edit Invoice"
-                      >
-                        <Edit3 size={14} /> Edit
-                      </button>
-                      <button
-                        onClick={() => printDocumentInIframe(`/print/invoice/${inv._id}`)}
-                        className="btn-secondary"
-                        title="Print PDF"
-                      >
-                        <Printer size={14} /> Print
-                      </button>
-                      <button
-                        onClick={() => handleDelete(inv._id, inv.invoiceNo)}
-                        className="btn-danger"
-                        title="Delete"
-                      >
-                        <Trash2 size={14} />
-                      </button>
-                    </div>
-                  </td>
+        {loading ? (
+          <SkeletonTable rows={8} columns={9} />
+        ) : (
+          <>
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th>Invoice No</th>
+                  <th>PO Number</th>
+                  <th>Date</th>
+                  <th>Due Date</th>
+                  <th>Customer</th>
+                  <th>Status</th>
+                  <th>Total ($)</th>
+                  <th>Balance Due ($)</th>
+                  <th style={{ textAlign: 'right' }}>Actions</th>
                 </tr>
-              ))
-            ) : (
-              <tr>
-                <td colSpan="9" style={{ textAlign: 'center', padding: '40px', color: 'var(--text-secondary)' }}>
-                  No invoices found. Click "Create Invoice" to start!
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+              </thead>
+              <tbody>
+                {invoices.length > 0 ? (
+                  invoices.map((inv) => (
+                    <tr key={inv._id}>
+                      <td style={{ fontWeight: 'bold', color: 'var(--accent-orange)' }}>{inv.invoiceNo}</td>
+                      <td>{inv.poNumber}</td>
+                      <td>{inv.date}</td>
+                      <td>
+                        <button
+                          onClick={() => handleOpenDueDateModal(inv)}
+                          className="btn-secondary"
+                          style={{
+                            padding: '3px 8px',
+                            fontSize: '12px',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                            backgroundColor: inv.status === 'OVERDUE' ? 'rgba(239, 68, 68, 0.15)' : 'var(--bg-main)',
+                            color: inv.status === 'OVERDUE' ? '#f87171' : 'var(--text-main)',
+                            borderColor: inv.status === 'OVERDUE' ? '#ef4444' : 'var(--border-color)'
+                          }}
+                          title="Click to change Due Date"
+                        >
+                          <Calendar size={12} />
+                          <span>{inv.dueDate || inv.date}</span>
+                        </button>
+                      </td>
+                      <td>{inv.company?.name || 'Constance Halaveli'}</td>
+                      <td>
+                        <span className={`badge badge-${inv.status.toLowerCase()}`}>{inv.status}</span>
+                      </td>
+                      <td style={{ fontWeight: 'bold' }}>${(inv.grandTotal || 0).toFixed(2)}</td>
+                      <td style={{ fontWeight: 'bold', color: inv.balanceDue > 0 ? 'var(--accent-orange)' : '#4ade80' }}>
+                        ${(inv.balanceDue || 0).toFixed(2)}
+                      </td>
+                      <td style={{ textAlign: 'right' }}>
+                        <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+                          {inv.status !== 'PAID' && (
+                            <button
+                              onClick={() => {
+                                setPaymentModalItem(inv);
+                                setPayAmount(inv.balanceDue ? inv.balanceDue.toFixed(2) : '');
+                              }}
+                              className="btn-secondary"
+                              style={{ backgroundColor: 'rgba(34, 197, 94, 0.2)', color: '#4ade80', border: '1px solid rgba(34, 197, 94, 0.4)' }}
+                              title="Record Payment"
+                            >
+                              <DollarSign size={14} /> Record Payment
+                            </button>
+                          )}
+                          <button
+                            onClick={() => navigate(`/invoices/view/${inv._id}`)}
+                            className="btn-secondary"
+                            title="View Document"
+                          >
+                            <Eye size={14} /> View
+                          </button>
+                          <button
+                            onClick={() => navigate(`/invoices/edit/${inv._id}`)}
+                            className="btn-secondary"
+                            title="Edit Invoice"
+                          >
+                            <Edit3 size={14} /> Edit
+                          </button>
+                          <button
+                            onClick={() => printDocumentInIframe(`/print/invoice/${inv._id}`)}
+                            className="btn-secondary"
+                            title="Print PDF"
+                          >
+                            <Printer size={14} /> Print
+                          </button>
+                          <button
+                            onClick={() => handleDelete(inv._id, inv.invoiceNo)}
+                            className="btn-danger"
+                            title="Delete"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan="9" style={{ textAlign: 'center', padding: '40px', color: 'var(--text-secondary)' }}>
+                      No invoices found. Click "Create Invoice" to start!
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+            <Pagination
+              pagination={pagination}
+              onPageChange={(p) => fetchInvoices(p)}
+            />
+          </>
+        )}
       </div>
 
       {/* Edit Due Date Modal */}

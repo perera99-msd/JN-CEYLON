@@ -4,11 +4,12 @@ const Invoice = require('../models/Invoice');
 const Quotation = require('../models/Quotation');
 const Payment = require('../models/Payment');
 const { previewNextSequence, consumeNextSequence } = require('../services/sequenceService');
+const { logActivity } = require('../services/activityLogger');
 
-// GET /api/invoices - List with filters
+// GET /api/invoices - List with filters and optional pagination
 router.get('/', async (req, res) => {
   try {
-    const { status, companyId, search } = req.query;
+    const { status, companyId, search, page, limit } = req.query;
     let query = { isDeleted: { $ne: true } };
 
     if (status && status !== 'ALL') {
@@ -26,12 +27,65 @@ router.get('/', async (req, res) => {
       ];
     }
 
+    if (page) {
+      const pageNum = Math.max(1, parseInt(page, 10) || 1);
+      const limitNum = Math.min(100, Math.max(1, parseInt(limit, 10) || 15));
+      const skip = (pageNum - 1) * limitNum;
+      const total = await Invoice.countDocuments(query);
+      const invoices = await Invoice.find(query)
+        .populate('company')
+        .populate('quotation')
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limitNum);
+
+      return res.json({
+        data: invoices,
+        pagination: {
+          page: pageNum,
+          limit: limitNum,
+          total,
+          pages: Math.ceil(total / limitNum)
+        }
+      });
+    }
+
     const invoices = await Invoice.find(query)
       .populate('company')
       .populate('quotation')
       .sort({ createdAt: -1 });
 
     res.json(invoices);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// GET /api/invoices/export - Export invoices as CSV
+router.get('/export', async (req, res) => {
+  try {
+    const invoices = await Invoice.find({ isDeleted: { $ne: true } })
+      .populate('company')
+      .sort({ createdAt: -1 });
+
+    const headers = ['Invoice No', 'Date', 'Customer Code', 'Company', 'PO Number', 'Quotation No', 'Total (USD)', 'Paid (USD)', 'Balance Due (USD)', 'Status'];
+    const rows = invoices.map(inv => [
+      inv.invoiceNo || '',
+      inv.date || '',
+      `"${(inv.custCode || '').replace(/"/g, '""')}"`,
+      `"${(inv.company?.name || '').replace(/"/g, '""')}"`,
+      `"${(inv.poNumber || '').replace(/"/g, '""')}"`,
+      inv.quotationNo || '',
+      (inv.grandTotal || 0).toFixed(2),
+      (inv.amountPaid || 0).toFixed(2),
+      (inv.balanceDue || 0).toFixed(2),
+      inv.status || ''
+    ]);
+
+    const csvContent = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', `attachment; filename="invoices_${new Date().toISOString().slice(0, 10)}.csv"`);
+    res.status(200).send(csvContent);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -180,6 +234,15 @@ router.post('/from-quotation/:quotationId', async (req, res) => {
     if (poNumber) quotation.poNumber = poNumber;
     await quotation.save();
 
+    logActivity({
+      req,
+      action: 'CREATE',
+      entityType: 'INVOICE',
+      entityId: invoice._id,
+      entityIdentifier: invoice.invoiceNo,
+      description: `Created invoice ${invoice.invoiceNo} from quotation ${quotation.quotationNo}`
+    });
+
     const populated = await Invoice.findById(invoice._id).populate('company').populate('quotation');
     res.status(201).json(populated);
   } catch (error) {
@@ -289,6 +352,15 @@ router.delete('/:id', async (req, res) => {
       { invoice: req.params.id },
       { isDeleted: true, deletedAt: new Date() }
     );
+
+    logActivity({
+      req,
+      action: 'DELETE',
+      entityType: 'INVOICE',
+      entityId: invoice._id,
+      entityIdentifier: invoice.invoiceNo,
+      description: `Moved invoice ${invoice.invoiceNo} and its payments to Recycle Bin`
+    });
 
     res.json({ message: 'Invoice and associated payments moved to Recycle Bin' });
   } catch (error) {

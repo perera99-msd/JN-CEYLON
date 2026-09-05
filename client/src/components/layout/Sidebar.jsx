@@ -11,12 +11,14 @@ import {
   Settings,
   Shield,
   User,
-  LogOut 
+  LogOut,
+  History,
+  KeyRound
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
 const Sidebar = () => {
-  const { user, logout } = useAuth();
+  const { user, logout, setIsPasswordModalOpen } = useAuth();
 
   const navItems = [
     { path: '/', label: 'Dashboard', icon: LayoutDashboard },
@@ -25,6 +27,7 @@ const Sidebar = () => {
     { path: '/statements', label: 'Account Statements', icon: FileSpreadsheet },
     { path: '/payments', label: 'Payments', icon: CreditCard },
     { path: '/companies', label: 'Companies', icon: Building2 },
+    { path: '/activity', label: 'Activity Log', icon: History },
     { path: '/recycle-bin', label: 'Recycle Bin', icon: Trash2 },
   ];
 
@@ -83,6 +86,15 @@ const Sidebar = () => {
             </div>
           </div>
         )}
+
+        <button
+          onClick={() => setIsPasswordModalOpen(true)}
+          className="nav-item"
+          style={{ width: '100%', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', margin: 0 }}
+        >
+          <KeyRound size={18} />
+          <span>Change Password</span>
+        </button>
 
         <button
           onClick={logout}

@@ -84,6 +84,29 @@ Log out and destroy the session.
 
 ---
 
+### POST `/api/auth/change-password`
+
+🔒 **Requires Auth** — Change current user's password.
+
+**Body:**
+```json
+{
+  "currentPassword": "old-password",
+  "newPassword": "new-password"
+}
+```
+
+**Response `200`:**
+```json
+{
+  "message": "Password updated successfully"
+}
+```
+
+**Errors:** `400` Validation error / Incorrect current password · `401` Not authenticated
+
+---
+
 ## 🏥 Health & Readiness
 
 ### GET `/api/health`
@@ -578,6 +601,65 @@ Restore a soft-deleted item.
 ### DELETE `/api/recycle-bin/:type/:id`
 
 Permanently delete an item from the Recycle Bin.
+
+---
+
+## 📜 Activity Log
+
+### GET `/api/activity`
+
+🔒 **Requires Auth** — Retrieve paginated audit trail of system activities.
+
+**Query Parameters:**
+- `action` — Filter by action (`ALL`, `CREATE`, `UPDATE`, `DELETE`, `LOGIN`, `PAYMENT`, `DUPLICATE`)
+- `entityType` — Filter by module (`ALL`, `QUOTATION`, `INVOICE`, `PAYMENT`, `COMPANY`, `USER`)
+- `search` — Keyword search across descriptions and identifiers
+- `page` — Page number (default `1`)
+- `limit` — Items per page (default `20`, max `100`)
+
+**Response `200`:**
+```json
+{
+  "data": [
+    {
+      "_id": "...",
+      "userName": "Admin",
+      "action": "CREATE",
+      "entityType": "QUOTATION",
+      "entityIdentifier": "QT-0001",
+      "description": "Created quotation QT-0001",
+      "createdAt": "2026-09-05T12:00:00.000Z"
+    }
+  ],
+  "pagination": {
+    "page": 1,
+    "limit": 20,
+    "total": 1,
+    "pages": 1
+  }
+}
+```
+
+---
+
+## 🔍 Global Search
+
+### GET `/api/search`
+
+🔒 **Requires Auth** — Unified search across Quotations, Invoices, Companies, and Payments.
+
+**Query Parameters:**
+- `q` — Search query string (min 2 characters)
+
+**Response `200`:**
+```json
+{
+  "quotations": [...],
+  "invoices": [...],
+  "companies": [...],
+  "payments": [...]
+}
+```
 
 ---
 

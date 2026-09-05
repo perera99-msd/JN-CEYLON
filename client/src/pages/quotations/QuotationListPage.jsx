@@ -2,7 +2,9 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 import DashboardLayout from '../../components/layout/DashboardLayout';
-import { Plus, Search, Eye, Printer, Download, Edit3, Trash2, ArrowRight } from 'lucide-react';
+import Pagination from '../../components/common/Pagination';
+import SkeletonTable from '../../components/common/SkeletonTable';
+import { Plus, Search, Eye, Printer, Download, Edit3, Trash2, ArrowRight, Copy } from 'lucide-react';
 import { printDocumentInIframe } from '../../utils/print';
 import { useNavigate } from 'react-router-dom';
 import { useConfirm } from '../../contexts/ConfirmContext';
@@ -14,20 +16,31 @@ const QuotationListPage = () => {
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [poModalItem, setPoModalItem] = useState(null);
   const [poNumberInput, setPoNumberInput] = useState('');
+  const [pagination, setPagination] = useState({ page: 1, limit: 15, total: 0, pages: 1 });
   const navigate = useNavigate();
   const confirm = useConfirm();
 
   useEffect(() => {
-    fetchQuotations();
+    fetchQuotations(1);
   }, [statusFilter]);
 
-  const fetchQuotations = async () => {
+  const fetchQuotations = async (targetPage = 1) => {
     try {
       setLoading(true);
       const res = await axios.get('/api/quotations', {
-        params: { status: statusFilter, search }
+        params: {
+          status: statusFilter,
+          search: search.trim() || undefined,
+          page: targetPage,
+          limit: 15
+        }
       });
-      setQuotations(res.data);
+      if (res.data.pagination) {
+        setQuotations(res.data.data || []);
+        setPagination(res.data.pagination);
+      } else {
+        setQuotations(res.data || []);
+      }
     } catch (error) {
       console.error('Error fetching quotations:', error);
     } finally {
@@ -37,7 +50,21 @@ const QuotationListPage = () => {
 
   const handleSearch = (e) => {
     e.preventDefault();
-    fetchQuotations();
+    fetchQuotations(1);
+  };
+
+  const handleDuplicate = async (id, quotationNo) => {
+    try {
+      const res = await axios.post(`/api/quotations/${id}/duplicate`);
+      toast.success(`Quotation duplicated as "${res.data.quotationNo}"!`);
+      fetchQuotations(pagination.page);
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to duplicate quotation');
+    }
+  };
+
+  const handleExportCSV = () => {
+    window.open('/api/quotations/export', '_blank');
   };
 
   const handleDelete = async (id, quotationNo) => {
@@ -52,7 +79,7 @@ const QuotationListPage = () => {
       try {
         await axios.delete(`/api/quotations/${id}`);
         toast.success(`Quotation "${quotationNo}" deleted successfully`);
-        fetchQuotations();
+        fetchQuotations(pagination.page);
       } catch (error) {
         toast.error(error.response?.data?.message || 'Error deleting quotation');
       }
@@ -82,8 +109,8 @@ const QuotationListPage = () => {
   return (
     <DashboardLayout title="Quotations Management">
       {/* Top Controls */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-        <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', flexWrap: 'wrap', gap: '12px' }}>
+        <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
           <form onSubmit={handleSearch} style={{ display: 'flex', gap: '8px' }}>
             <div className="form-group" style={{ margin: 0, minWidth: '240px' }}>
               <input
@@ -111,93 +138,115 @@ const QuotationListPage = () => {
           </select>
         </div>
 
-        <button onClick={() => navigate('/quotations/new')} className="btn-primary">
-          <Plus size={16} /> Create Quotation
-        </button>
+        <div style={{ display: 'flex', gap: '10px' }}>
+          <button onClick={handleExportCSV} className="btn-secondary" title="Export as CSV spreadsheet">
+            <Download size={16} /> Export CSV
+          </button>
+          <button onClick={() => navigate('/quotations/new')} className="btn-primary">
+            <Plus size={16} /> Create Quotation
+          </button>
+        </div>
       </div>
 
       {/* Table */}
       <div className="table-container">
-        <table className="data-table">
-          <thead>
-            <tr>
-              <th>Quotation No</th>
-              <th>Date</th>
-              <th>Customer</th>
-              <th>Cust. Code</th>
-              <th>Status</th>
-              <th>Total Amount</th>
-              <th style={{ textAlign: 'right' }}>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {quotations.length > 0 ? (
-              quotations.map((q) => (
-                <tr key={q._id}>
-                  <td style={{ fontWeight: 'bold', color: 'var(--accent-orange)' }}>{q.quotationNo}</td>
-                  <td>{q.date}</td>
-                  <td>{q.company?.name || 'Constance Halaveli'}</td>
-                  <td>{q.custCode}</td>
-                  <td>
-                    <span className={`badge badge-${q.status.toLowerCase()}`}>{q.status}</span>
-                  </td>
-                  <td style={{ fontWeight: 'bold' }}>${(q.grandTotal || 0).toFixed(2)}</td>
-                  <td style={{ textAlign: 'right' }}>
-                    <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
-                      {q.status !== 'CONVERTED' && (
-                        <button
-                          onClick={() => {
-                            setPoModalItem(q);
-                            setPoNumberInput(q.poNumber || '');
-                          }}
-                          className="btn-secondary"
-                          style={{ backgroundColor: 'rgba(168, 85, 247, 0.2)', color: '#c084fc', border: '1px solid rgba(168, 85, 247, 0.4)' }}
-                          title="Generate Invoice with PO"
-                        >
-                          <ArrowRight size={14} /> Create Invoice
-                        </button>
-                      )}
-                      <button
-                        onClick={() => navigate(`/quotations/view/${q._id}`)}
-                        className="btn-secondary"
-                        title="View Document"
-                      >
-                        <Eye size={14} /> View
-                      </button>
-                      <button
-                        onClick={() => navigate(`/quotations/edit/${q._id}`)}
-                        className="btn-secondary"
-                        title="Edit Quotation"
-                      >
-                        <Edit3 size={14} /> Edit
-                      </button>
-                      <button
-                        onClick={() => printDocumentInIframe(`/print/quotation/${q._id}`)}
-                        className="btn-secondary"
-                        title="Print PDF"
-                      >
-                        <Printer size={14} /> Print
-                      </button>
-                      <button
-                        onClick={() => handleDelete(q._id, q.quotationNo)}
-                        className="btn-danger"
-                        title="Delete"
-                      >
-                        <Trash2 size={14} />
-                      </button>
-                    </div>
-                  </td>
+        {loading ? (
+          <SkeletonTable rows={8} columns={7} />
+        ) : (
+          <>
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th>Quotation No</th>
+                  <th>Date</th>
+                  <th>Customer</th>
+                  <th>Cust. Code</th>
+                  <th>Status</th>
+                  <th>Total Amount</th>
+                  <th style={{ textAlign: 'right' }}>Actions</th>
                 </tr>
-              ))
-            ) : (
-              <tr>
-                <td colSpan="7" style={{ textAlign: 'center', padding: '40px', color: 'var(--text-secondary)' }}>
-                  No quotations found. Click "Create Quotation" to start!
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+              </thead>
+              <tbody>
+                {quotations.length > 0 ? (
+                  quotations.map((q) => (
+                    <tr key={q._id}>
+                      <td style={{ fontWeight: 'bold', color: 'var(--accent-orange)' }}>{q.quotationNo}</td>
+                      <td>{q.date}</td>
+                      <td>{q.company?.name || 'Constance Halaveli'}</td>
+                      <td>{q.custCode}</td>
+                      <td>
+                        <span className={`badge badge-${q.status.toLowerCase()}`}>{q.status}</span>
+                      </td>
+                      <td style={{ fontWeight: 'bold' }}>${(q.grandTotal || 0).toFixed(2)}</td>
+                      <td style={{ textAlign: 'right' }}>
+                        <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+                          {q.status !== 'CONVERTED' && (
+                            <button
+                              onClick={() => {
+                                setPoModalItem(q);
+                                setPoNumberInput(q.poNumber || '');
+                              }}
+                              className="btn-secondary"
+                              style={{ backgroundColor: 'rgba(168, 85, 247, 0.2)', color: '#c084fc', border: '1px solid rgba(168, 85, 247, 0.4)' }}
+                              title="Generate Invoice with PO"
+                            >
+                              <ArrowRight size={14} /> Create Invoice
+                            </button>
+                          )}
+                          <button
+                            onClick={() => handleDuplicate(q._id, q.quotationNo)}
+                            className="btn-secondary"
+                            title="Duplicate Quotation"
+                          >
+                            <Copy size={14} /> Duplicate
+                          </button>
+                          <button
+                            onClick={() => navigate(`/quotations/view/${q._id}`)}
+                            className="btn-secondary"
+                            title="View Document"
+                          >
+                            <Eye size={14} /> View
+                          </button>
+                          <button
+                            onClick={() => navigate(`/quotations/edit/${q._id}`)}
+                            className="btn-secondary"
+                            title="Edit Quotation"
+                          >
+                            <Edit3 size={14} /> Edit
+                          </button>
+                          <button
+                            onClick={() => printDocumentInIframe(`/print/quotation/${q._id}`)}
+                            className="btn-secondary"
+                            title="Print PDF"
+                          >
+                            <Printer size={14} /> Print
+                          </button>
+                          <button
+                            onClick={() => handleDelete(q._id, q.quotationNo)}
+                            className="btn-danger"
+                            title="Delete"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan="7" style={{ textAlign: 'center', padding: '40px', color: 'var(--text-secondary)' }}>
+                      No quotations found. Click "Create Quotation" to start!
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+            <Pagination
+              pagination={pagination}
+              onPageChange={(p) => fetchQuotations(p)}
+            />
+          </>
+        )}
       </div>
 
       {/* Convert to Invoice PO Modal */}

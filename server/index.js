@@ -4,13 +4,17 @@ const dotenv = require('dotenv');
 dotenv.config();
 
 const connectDB = require('./config/db');
+const ensureIndexes = require('./config/indexes');
 const seedAdmin = require('./services/seedAdmin');
+const { startOverdueChecker } = require('./services/overdueChecker');
 const createApp = require('./app');
 const app = createApp();
 
-// Connect Database & Seed Admin
+// Connect Database, Seed Admin, Ensure Indexes, and Start Overdue Checker
 connectDB().then(() => {
   seedAdmin();
+  ensureIndexes();
+  startOverdueChecker();
 });
 
 const PORT = process.env.PORT || 5000;

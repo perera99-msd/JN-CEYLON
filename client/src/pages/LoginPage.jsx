@@ -7,7 +7,7 @@ const LoginPage = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [rememberMe, setRememberMe] = useState(true);
+
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
@@ -223,16 +223,7 @@ const LoginPage = () => {
               </button>
 
               {/* Checkbox & Links */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '11px', color: '#64748b', padding: '0 4px' }}>
-                <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}>
-                  <input
-                    type="checkbox"
-                    checked={rememberMe}
-                    onChange={(e) => setRememberMe(e.target.checked)}
-                    style={{ accentColor: '#0f172a', cursor: 'pointer' }}
-                  />
-                  <span>Remember me</span>
-                </label>
+              <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', fontSize: '11px', color: '#64748b', padding: '0 4px' }}>
                 <span style={{ cursor: 'pointer', color: '#0f172a', fontWeight: '600' }} onClick={() => setError('Contact Admin for password resets.')}>
                   Forgot password?
                 </span>
