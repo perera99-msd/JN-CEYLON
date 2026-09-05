@@ -1,0 +1,56 @@
+name: 🔒 Security Audit
+
+on:
+  schedule:
+    - cron: '0 9 * * 1'  # Every Monday at 9:00 UTC
+  pull_request:
+    branches: [main]
+  workflow_dispatch:  # Allow manual trigger
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    name: 🔍 Dependency Audit
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 📦 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: 📥 Install server dependencies
+        run: npm ci
+
+      - name: 📥 Install client dependencies
+        run: npm ci --prefix client
+
+      - name: 🔍 Audit server dependencies
+        run: |
+          echo "🔍 Auditing server dependencies..."
+          npm audit --audit-level=high || true
+
+      - name: 🔍 Audit client dependencies
+        run: |
+          echo "🔍 Auditing client dependencies..."
+          npm audit --prefix client --audit-level=high || true
+
+      - name: 📋 Generate audit report
+        run: |
+          echo "## 📋 Security Audit Report" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Server Dependencies" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          npm audit 2>&1 || true >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Client Dependencies" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          npm audit --prefix client 2>&1 || true >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY

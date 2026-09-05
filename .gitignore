@@ -33,3 +33,14 @@ reports/
 *.dump
 *.sql.gz
 .DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE
+.vscode/
+.idea/
+*.code-workspace
+
+# Agents/AI
+.agents/
+.gemini/

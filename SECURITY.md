@@ -1,34 +1,120 @@
-# Security Policy
+# 🔒 Security Policy
 
-## Supported versions
+> This document outlines the security practices, vulnerability reporting process, and production requirements for JN Ceylon ERP.
 
-The `main` branch is the supported development line. Deploy only reviewed commits and keep dependencies updated through pull requests.
+---
 
-## Reporting a vulnerability
+## 📋 Supported Versions
 
-Do not open a public issue for a suspected vulnerability. Report it privately to the project owner with:
+| Version | Status | Support |
+|---------|--------|---------|
+| 1.0.x | ✅ Current | Active security updates |
 
-- A short description and severity
-- Affected route, file, or dependency
-- Reproduction steps that do not include real customer data
-- Suggested mitigation, if known
+The `main` branch is the supported development line. Deploy only reviewed commits and keep dependencies updated.
 
-Do not include passwords, session cookies, database credentials, API keys, or personal data in a report.
+---
 
-## Secret handling
+## 🚨 Reporting a Vulnerability
 
-- `.env` files are ignored and must remain outside Git.
-- Use `.env.example` only as a placeholder template.
-- Rotate any credential that has appeared in source, logs, screenshots, commits, or chat.
-- If a secret was committed, assume it is compromised. Rotate it first, then remove it from history with an approved repository-history rewrite.
-- The repository previously contained default bootstrap credentials in older commits. Those credentials must never be used; provision a new admin password through the environment.
+> ⚠️ **Do NOT open a public issue for security vulnerabilities.**
 
-## Production security baseline
+### How to Report
 
-- HTTPS is required.
-- `SESSION_SECRET` is required and must be random.
-- `CORS_ORIGINS` must be an explicit allowlist.
-- MongoDB must require authentication and private network access.
-- Use `/api/ready` as the database readiness probe.
-- Restrict production access with capability permissions and audit financial mutations.
-- Keep backups encrypted and test restoration regularly.
+1. **Contact** the project owner privately via GitHub
+2. **Include** the following information:
+   - 📝 Short description and severity estimate (Critical / High / Medium / Low)
+   - 📁 Affected route, file, or dependency
+   - 🔄 Reproduction steps (without real customer data)
+   - 💡 Suggested mitigation, if known
+
+### What NOT to Include
+
+- ❌ Passwords, session cookies, or API keys
+- ❌ Database credentials or connection strings
+- ❌ Personal data or customer information
+- ❌ Screenshots containing sensitive data
+
+### Response Timeline
+
+| Action | Timeline |
+|--------|----------|
+| Acknowledge receipt | Within 48 hours |
+| Initial assessment | Within 5 business days |
+| Fix or mitigation | Based on severity |
+
+---
+
+## 🔐 Secret Handling
+
+### Rules
+
+- 🚫 `.env` files are ignored by Git and must never be committed
+- 📝 Use `.env.example` only as a placeholder template — never put real values
+- 🔄 Rotate any credential that has appeared in source, logs, screenshots, commits, or chat
+- ⚡ If a secret was committed, assume it is **compromised** — rotate first, then clean history
+- 🔑 The repository previously contained default bootstrap credentials in older commits — those must never be used
+
+### Secret Rotation
+
+```
+1. Generate new credential
+2. Update in Render environment variables
+3. Verify service restarts successfully
+4. Invalidate old credential
+5. If committed to Git — perform history rewrite (with team approval)
+```
+
+---
+
+## 🛡️ Production Security Baseline
+
+### Required Configuration
+
+| Requirement | Details |
+|-------------|---------|
+| 🌐 HTTPS | Render provides automatic TLS |
+| 🔑 `SESSION_SECRET` | Must be random, 32+ characters |
+| 🌍 `CORS_ORIGINS` | Must be an explicit allowlist (no `*`) |
+| 🗄️ MongoDB Auth | Must require authentication |
+| 🔒 Network Access | MongoDB must use private/restricted network |
+| 🏥 Health Probes | Use `/api/ready` for database readiness |
+| 💾 Backups | Keep encrypted backups; test restoration regularly |
+
+### Authentication Security
+
+- ✅ Passwords hashed with bcrypt (10 salt rounds)
+- ✅ Session-based auth with httpOnly cookies
+- ✅ Configurable `sameSite` and `secure` cookie flags
+- ✅ Admin bootstrap from environment variables only
+- ✅ Origin validation on all mutating requests (POST/PUT/PATCH/DELETE)
+
+### Security Checklist (Pre-Deploy)
+
+- [ ] 🔐 All secrets configured via environment variables
+- [ ] 🔑 `SESSION_SECRET` is unique and random
+- [ ] 🌍 `CORS_ORIGINS` does not contain `*` or `localhost`
+- [ ] 👤 Admin password changed from bootstrap value
+- [ ] 🗄️ MongoDB Atlas has IP allowlist configured
+- [ ] 💾 Database backups are enabled and tested
+- [ ] 📦 Dependencies audited (`npm audit`)
+
+---
+
+## 🔮 Planned Security Improvements
+
+The following features are recommended before multi-user production use:
+
+- 🔐 Capability-based permissions (fine-grained access control)
+- 📋 Audit logs for financial mutations
+- 🚦 Login rate limiting / brute-force protection
+- 🔄 Transactional payment updates
+- 🛑 Duplicate quotation-conversion protection
+- 💰 Financial reconciliation tools
+
+---
+
+## 📚 Related Documentation
+
+- [🚀 Deployment](DEPLOYMENT.md) — Render deployment and environment setup
+- [📐 Architecture](ARCHITECTURE.md) — System architecture and security layers
+- [🤝 Contributing](CONTRIBUTING.md) — Development setup and guidelines

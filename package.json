@@ -1,8 +1,33 @@
 {
   "name": "jn-ceylon-erp",
   "version": "1.0.0",
-  "description": "JN Ceylon Products ERP System",
+  "description": "JN Ceylon Products ERP System — A modern quote-to-cash platform for export businesses",
   "main": "server/index.js",
+  "author": "JN Ceylon",
+  "license": "MIT",
+  "homepage": "https://jn-ceylon.onrender.com",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/perera99-msd/JN-CEYLON.git"
+  },
+  "bugs": {
+    "url": "https://github.com/perera99-msd/JN-CEYLON/issues"
+  },
+  "engines": {
+    "node": ">=20.0.0",
+    "npm": ">=10.0.0"
+  },
+  "keywords": [
+    "erp",
+    "quotation",
+    "invoice",
+    "payment",
+    "statement",
+    "express",
+    "react",
+    "mongodb",
+    "quote-to-cash"
+  ],
   "scripts": {
     "start": "node server/index.js",
     "server": "nodemon server/index.js",
