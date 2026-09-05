@@ -12,17 +12,28 @@ const InvoiceEditorPage = () => {
   const navigate = useNavigate();
   const isEdit = Boolean(id);
 
+  const getInitialDates = () => {
+    const today = new Date();
+    const dateStr = today.toLocaleDateString('en-GB').replace(/\//g, '.');
+    const oneMonth = new Date(today);
+    oneMonth.setMonth(oneMonth.getMonth() + 1);
+    const dueStr = oneMonth.toLocaleDateString('en-GB').replace(/\//g, '.');
+    return { dateStr, dueStr };
+  };
+
+  const initialDates = getInitialDates();
+
   const [companies, setCompanies] = useState([]);
   const [formData, setFormData] = useState({
     invoiceNo: '',
-    date: new Date().toLocaleDateString('en-GB').replace(/\//g, '.'),
+    date: initialDates.dateStr,
     company: '',
     custCode: '- Halav 05',
     preparedBy: 'JN Ceylon',
     poNumber: '55806',
     quotationNo: '',
     status: 'PENDING',
-    dueDate: new Date().toLocaleDateString('en-GB').replace(/\//g, '.'),
+    dueDate: initialDates.dueStr,
     items: [],
     terms: {
       price: 'All the above prices are mentioned in USD.',

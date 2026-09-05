@@ -146,6 +146,28 @@ router.post('/', async (req, res) => {
 
     const subtotal = calculatedItems.reduce((sum, item) => sum + item.total, 0);
 
+/**
+ * Calculates a date string 1 month ahead from the given base date (DD.MM.YYYY).
+ */
+const getOneMonthAhead = (baseDateStr) => {
+  let dateObj = new Date();
+  if (baseDateStr && typeof baseDateStr === 'string' && baseDateStr.includes('.')) {
+    const parts = baseDateStr.split('.');
+    if (parts.length === 3) {
+      const d = parseInt(parts[0], 10);
+      const m = parseInt(parts[1], 10) - 1;
+      const y = parseInt(parts[2], 10);
+      const parsed = new Date(y, m, d);
+      if (!isNaN(parsed.getTime())) {
+        dateObj = parsed;
+      }
+    }
+  }
+  const due = new Date(dateObj);
+  due.setMonth(due.getMonth() + 1);
+  return due.toLocaleDateString('en-GB').replace(/\//g, '.');
+};
+
     const invoice = new Invoice({
       invoiceNo: invoiceNo.trim(),
       date,
@@ -160,7 +182,7 @@ router.post('/', async (req, res) => {
       grandTotal: subtotal,
       amountPaid: 0,
       balanceDue: subtotal,
-      dueDate: dueDate || date,
+      dueDate: dueDate || getOneMonthAhead(date),
       terms,
       status: status || 'PENDING'
     });
@@ -221,7 +243,7 @@ router.post('/from-quotation/:quotationId', async (req, res) => {
       grandTotal: quotation.grandTotal,
       amountPaid: 0,
       balanceDue: quotation.grandTotal,
-      dueDate: dueDate || todayStr,
+      dueDate: dueDate || getOneMonthAhead(todayStr),
       terms: quotation.terms,
       status: 'PENDING'
     });

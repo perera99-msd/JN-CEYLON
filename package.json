@@ -35,7 +35,7 @@
     "dev": "concurrently \"npm run server\" \"npm run client\"",
     "build": "npm run build --prefix client",
     "seed": "node seed.js",
-    "test": "node --test test/health.test.js test/security.test.js"
+    "test": "node --test test/health.test.js test/security.test.js test/invoice-due-date.test.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
