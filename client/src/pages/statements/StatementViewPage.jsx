@@ -63,7 +63,7 @@ const StatementViewPage = () => {
   return (
     <DashboardLayout title={`Account Statement — ${statementData?.company?.name || ''}`}>
       {/* Action Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+      <div className="no-print" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
         <button onClick={() => navigate('/statements')} className="btn-secondary">
           <ArrowLeft size={16} /> Back to Statements
         </button>
@@ -75,7 +75,7 @@ const StatementViewPage = () => {
       </div>
 
       {/* Filter Toolbar */}
-      <div className="card" style={{ padding: '16px 20px', marginBottom: '24px', display: 'flex', flexWrap: 'wrap', gap: '20px', alignItems: 'center', justifyContent: 'space-between' }}>
+      <div className="card no-print" style={{ padding: '16px 20px', marginBottom: '24px', display: 'flex', flexWrap: 'wrap', gap: '20px', alignItems: 'center', justifyContent: 'space-between' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-secondary)', fontWeight: '600', fontSize: '14px' }}>
             <Filter size={16} /> Filter By:
@@ -138,7 +138,7 @@ const StatementViewPage = () => {
       </div>
 
       {/* Workspace Preview */}
-      <div style={{
+      <div className="print-workspace" style={{
         backgroundColor: '#525659',
         borderRadius: '12px',
         padding: '40px',

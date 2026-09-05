@@ -23,7 +23,7 @@
 .header-black-bg {
     background-color: #0a0a0a;
     color: #ffffff;
-    padding: 8mm 12mm 3mm 12mm; 
+    padding: 6mm 12mm 2.5mm 12mm;
 }
 .header-top-row {
     display: flex;
@@ -62,7 +62,7 @@
 .header-divider {
     border: none;
     border-top: 1px solid #333;
-    margin: 10px 0 8px 0;
+    margin: 8px 0 6px 0;
 }
 .tagline {
     color: #e67e22; 
@@ -74,7 +74,7 @@
 
 /* 2. WHITE BODY SECTION */
 .doc-body {
-    padding: 3mm 12mm 15mm 12mm; 
+    padding: 3mm 12mm 4mm 12mm;
     flex-grow: 1;
     display: flex;
     flex-direction: column;
@@ -85,10 +85,10 @@
 .meta-row {
     display: flex;
     justify-content: space-between;
-    margin-bottom: 10px;
-    font-size: 14px;
+    margin-bottom: 6px;
+    font-size: 13.5px;
     font-weight: bold;
-    line-height: 1.4;
+    line-height: 1.35;
 }
 .bill-to-section {
     display: flex;
@@ -111,15 +111,15 @@
 
 /* TABLE SECTION */
 .greeting-text {
-    font-size: 14px;
+    font-size: 13.5px;
     font-weight: bold;
-    margin-bottom: 8px;
+    margin-bottom: 6px;
 }
 .doc-table-wrapper {
     flex-grow: 0; 
     display: flex;
     flex-direction: column;
-    margin-bottom: 8px;
+    margin-bottom: 6px;
 }
 .exact-table {
     width: 100%;
@@ -133,17 +133,18 @@
     color: #ffffff;
     border: 1px solid #000;
     font-size: 12px;
-    padding: 6px 4px;
+    padding: 5px 4px;
     font-weight: bold;
     text-align: center;
 }
 .exact-table td {
     border: 1px solid #000;
-    font-size: 13px;
+    font-size: 12.5px;
     font-weight: bold;
     text-align: center;
     vertical-align: middle;
-    padding: 4px 5px;
+    padding: 3px 4px;
+    line-height: 1.25;
     overflow: hidden;
     word-break: break-word; 
     overflow-wrap: break-word; 
@@ -168,30 +169,35 @@
 
 /* Image Display in Table */
 .item-thumbnail {
-    max-height: 52px;
-    max-width: 90px;
+    max-height: 38px;
+    max-width: 80px;
     object-fit: contain;
-    margin-top: 3px;
+    margin-top: 2px;
     display: block;
     margin-left: auto;
     margin-right: auto;
 }
 
-/* FOOTER SECTION */
+/* FOOTER SECTION WRAPPER */
+.doc-footer-wrapper {
+    margin-top: auto;
+    break-inside: avoid;
+    page-break-inside: avoid;
+}
+
 .doc-footer {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
-    font-size: 14px;
+    font-size: 13.5px;
     font-weight: bold;
-    margin-top: auto;
 }
 
 .doc-terms-table {
     border-collapse: collapse;
-    font-size: 13px;
+    font-size: 12.5px;
     font-weight: bold;
-    margin-bottom: 6px;
+    margin-bottom: 4px;
 }
 .doc-terms-table td {
     padding: 1px 0;
@@ -203,8 +209,8 @@
 
 .payment-heading {
     text-decoration: underline;
-    font-size: 14px;
-    margin-bottom: 3px;
+    font-size: 13px;
+    margin-bottom: 2px;
     font-weight: bold;
 }
 
@@ -215,12 +221,12 @@
     border: 1px solid #000;
 }
 .totals-table tr {
-    height: 22px;
+    height: 20px;
 }
 .totals-table td {
-    font-size: 13px;
+    font-size: 12.5px;
     font-weight: bold;
-    padding: 3px 8px;
+    padding: 2px 8px;
 }
 .totals-table td:first-child {
     background-color: #000;
@@ -240,23 +246,27 @@
 
 .thank-you-row {
     position: relative;
-    margin-top: 6px;
+    margin-top: 4px;
     display: flex;
     justify-content: center;
     align-items: baseline;
+    break-before: avoid;
+    page-break-before: avoid;
+    break-inside: avoid;
+    page-break-inside: avoid;
 }
 .thank-you-text {
-    font-size: 18px;
+    font-size: 16px;
     font-style: italic;
     font-weight: bold;
-    letter-spacing: 1px;
+    letter-spacing: 0.5px;
     margin: 0;
 }
 
 .page-number {
     position: absolute;
-    right: 12mm; 
-    bottom: 3mm; 
+    right: 12mm;
+    bottom: 2mm;
     font-size: 11px;
     font-weight: bold;
     background: #ffffff;
@@ -267,32 +277,45 @@
 @media print {
     @page {
         size: A4 portrait;
-        margin: 0mm; 
+        margin: 0mm;
     }
-    body { 
-        background: none; 
-        display: block; 
-        height: auto; 
-        overflow: visible; 
+    body {
+        background: none;
+        display: block;
+        height: auto;
+        overflow: visible;
     }
-    .no-print, #sidebar, .sidebar-container, header { display: none !important; }
-    .print-workspace, #preview-workspace { 
-        padding: 0; 
-        margin: 0;
-        background: none; 
-        display: block; 
-        overflow: visible; 
-        width: 100%;
+    .no-print, #sidebar, .sidebar-container, header, .btn-primary, .btn-secondary { display: none !important; }
+    .print-workspace, #preview-workspace {
+        padding: 0 !important;
+        margin: 0 !important;
+        background: none !important;
+        display: block !important;
+        overflow: visible !important;
+        width: 100% !important;
+        min-height: auto !important;
+        border-radius: 0 !important;
+    }
+    .app-container, .main-content, .page-body {
+        padding: 0 !important;
+        margin: 0 !important;
+        display: block !important;
+        width: 100% !important;
+        background: none !important;
     }
     .a4-page { 
         box-shadow: none !important; 
         margin: 0 !important; 
         width: 210mm !important;
-        height: 297mm !important;
+        height: 296.5mm !important;
+        max-height: 296.5mm !important;
         page-break-after: always; 
         page-break-inside: avoid;
+        break-inside: avoid;
+        box-sizing: border-box;
     }
     .a4-page:last-child {
         page-break-after: auto; 
+        break-after: auto;
     }
 }

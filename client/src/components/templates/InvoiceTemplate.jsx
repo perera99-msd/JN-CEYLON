@@ -1,5 +1,6 @@
 import React from 'react';
 import DocumentHeader from './DocumentHeader';
+import { formatMoney } from '../../utils/format';
 
 const InvoiceTemplate = ({ data }) => {
   const {
@@ -130,8 +131,8 @@ const InvoiceTemplate = ({ data }) => {
                         </td>
                         <td style={{ width: '8%', whiteSpace: 'nowrap' }}>{item.qty || ''}</td>
                         <td style={{ width: '25%', textAlign: 'left' }}>{item.desc || ''}</td>
-                        <td style={{ width: '10%', whiteSpace: 'nowrap' }}>{item.price !== undefined && item.price !== '' ? item.price : ''}</td>
-                        <td style={{ width: '15%', whiteSpace: 'nowrap' }}>{item.total !== undefined && item.total !== '' ? item.total : ''}</td>
+                        <td style={{ width: '10%', whiteSpace: 'nowrap' }}>{formatMoney(item.price)}</td>
+                        <td style={{ width: '15%', whiteSpace: 'nowrap' }}>{formatMoney(item.total)}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -139,12 +140,13 @@ const InvoiceTemplate = ({ data }) => {
               </div>
 
               {isLastPage && (
-                <>
+                <div className="doc-footer-wrapper">
                   <div className="doc-footer">
                     <div className="doc-terms">
                       <table className="doc-terms-table">
                         <tbody>
                           <tr><td>Price</td><td>- {terms?.price || 'All the above prices are mentioned in USD.'}</td></tr>
+                          <tr><td>Freight Charges</td><td>- Included in the above prices.</td></tr>
                           <tr><td>Delivery</td><td>- {terms?.delivery || '3 to 4 weeks from order confirmation.'}</td></tr>
                           <tr><td>Term</td><td>- {terms?.term || 'Payment upon order confirmation.'}</td></tr>
                           <tr><td>Validity</td><td>- {terms?.validity || '30 Days.'}</td></tr>
@@ -177,7 +179,7 @@ const InvoiceTemplate = ({ data }) => {
                   <div className="thank-you-row">
                     <div className="thank-you-text">- THANK YOU FOR YOUR BUSINESS -</div>
                   </div>
-                </>
+                </div>
               )}
             </div>
           </>
@@ -210,8 +212,8 @@ const InvoiceTemplate = ({ data }) => {
                       </td>
                       <td style={{ width: '8%', whiteSpace: 'nowrap' }}>{item.qty || ''}</td>
                       <td style={{ width: '25%', textAlign: 'left' }}>{item.desc || ''}</td>
-                      <td style={{ width: '10%', whiteSpace: 'nowrap' }}>{item.price !== undefined && item.price !== '' ? item.price : ''}</td>
-                      <td style={{ width: '15%', whiteSpace: 'nowrap' }}>{item.total !== undefined && item.total !== '' ? item.total : ''}</td>
+                      <td style={{ width: '10%', whiteSpace: 'nowrap' }}>{formatMoney(item.price)}</td>
+                      <td style={{ width: '15%', whiteSpace: 'nowrap' }}>{formatMoney(item.total)}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -219,12 +221,13 @@ const InvoiceTemplate = ({ data }) => {
             </div>
 
             {isLastPage && (
-              <>
+              <div className="doc-footer-wrapper">
                 <div className="doc-footer">
                   <div className="doc-terms">
                     <table className="doc-terms-table">
                       <tbody>
                         <tr><td>Price</td><td>- {terms?.price || 'All the above prices are mentioned in USD.'}</td></tr>
+                        <tr><td>Freight Charges</td><td>- Included in the above prices.</td></tr>
                         <tr><td>Delivery</td><td>- {terms?.delivery || '3 to 4 weeks from order confirmation.'}</td></tr>
                         <tr><td>Term</td><td>- {terms?.term || 'Payment upon order confirmation.'}</td></tr>
                         <tr><td>Validity</td><td>- {terms?.validity || '30 Days.'}</td></tr>
@@ -257,7 +260,7 @@ const InvoiceTemplate = ({ data }) => {
                 <div className="thank-you-row">
                   <div className="thank-you-text">- THANK YOU FOR YOUR BUSINESS -</div>
                 </div>
-              </>
+              </div>
             )}
           </div>
         )}

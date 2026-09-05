@@ -1,5 +1,6 @@
 import React from 'react';
 import DocumentHeader from './DocumentHeader';
+import { formatMoney } from '../../utils/format';
 
 const StatementTemplate = ({ data }) => {
   const {
@@ -64,7 +65,7 @@ const StatementTemplate = ({ data }) => {
                           Total Balance
                         </td>
                         <td style={{ background: '#fff', color: '#000', textAlign: 'center', fontWeight: 'bold' }}>
-                          $ {accountDisplay.toFixed(2)}
+                          $ {formatMoney(accountDisplay)}
                         </td>
                       </tr>
                       <tr>
@@ -103,7 +104,7 @@ const StatementTemplate = ({ data }) => {
                         <td style={{ width: '10%' }}>{item.status || ''}</td>
                         <td style={{ width: '10%', whiteSpace: 'nowrap' }}>{item.due || ''}</td>
                         <td style={{ width: '10%', fontWeight: 'bold', whiteSpace: 'nowrap' }}>
-                          {item.total !== undefined && item.total !== '' ? `$ ${typeof item.total === 'number' ? item.total.toFixed(2) : item.total}` : ''}
+                          {item.total !== undefined && item.total !== '' ? `$ ${formatMoney(item.total)}` : ''}
                         </td>
                       </tr>
                     ))}
@@ -120,7 +121,7 @@ const StatementTemplate = ({ data }) => {
                           Pending Total Balance
                         </td>
                         <td style={{ width: '10%', background: '#000', color: '#fff', textAlign: 'center', fontWeight: 'bold', border: '1px solid #000', fontSize: '14px', whiteSpace: 'nowrap' }}>
-                          $ {pendingDisplay.toFixed(2)}
+                          $ {formatMoney(pendingDisplay)}
                         </td>
                       </tr>
                       <tr style={{ height: '28px' }}>
@@ -128,14 +129,14 @@ const StatementTemplate = ({ data }) => {
                           Account Total Balance
                         </td>
                         <td style={{ width: '10%', background: '#000', color: '#fff', textAlign: 'center', fontWeight: 'bold', border: '1px solid #000', fontSize: '14px', whiteSpace: 'nowrap' }}>
-                          $ {accountDisplay.toFixed(2)}
+                          $ {formatMoney(accountDisplay)}
                         </td>
                       </tr>
                     </tbody>
                   </table>
 
                   <div style={{ textAlign: 'center', fontSize: '14px', fontWeight: 'bold', marginTop: '15px', lineHeight: '1.6' }}>
-                    Your account balance is <strong>${pendingDisplay.toFixed(2)}</strong> Please make your payment to cover the balance by the due date.<br />
+                    Your account balance is <strong>${formatMoney(pendingDisplay)}</strong> Please make your payment to cover the balance by the due date.<br />
                     Make all checks payable to Ceylon Engineers<br />
                     <span style={{ fontSize: '16px', fontWeight: 'bold' }}>Thank you for your business!</span><br />
                     <span style={{ fontSize: '13px', fontWeight: 'normal' }}>
@@ -172,7 +173,7 @@ const StatementTemplate = ({ data }) => {
                       <td style={{ width: '10%' }}>{item.status || ''}</td>
                       <td style={{ width: '10%', whiteSpace: 'nowrap' }}>{item.due || ''}</td>
                       <td style={{ width: '10%', fontWeight: 'bold', whiteSpace: 'nowrap' }}>
-                        {item.total !== undefined && item.total !== '' ? `$ ${typeof item.total === 'number' ? item.total.toFixed(2) : item.total}` : ''}
+                        {item.total !== undefined && item.total !== '' ? `$ ${formatMoney(item.total)}` : ''}
                       </td>
                     </tr>
                   ))}
@@ -189,7 +190,7 @@ const StatementTemplate = ({ data }) => {
                         Pending Total Balance
                       </td>
                       <td style={{ width: '10%', background: '#000', color: '#fff', textAlign: 'center', fontWeight: 'bold', border: '1px solid #000', fontSize: '14px', whiteSpace: 'nowrap' }}>
-                        $ {pendingDisplay.toFixed(2)}
+                        $ {formatMoney(pendingDisplay)}
                       </td>
                     </tr>
                     <tr style={{ height: '28px' }}>
@@ -197,14 +198,14 @@ const StatementTemplate = ({ data }) => {
                         Account Total Balance
                       </td>
                       <td style={{ width: '10%', background: '#000', color: '#fff', textAlign: 'center', fontWeight: 'bold', border: '1px solid #000', fontSize: '14px', whiteSpace: 'nowrap' }}>
-                        $ {accountDisplay.toFixed(2)}
+                        $ {formatMoney(accountDisplay)}
                       </td>
                     </tr>
                   </tbody>
                 </table>
 
                 <div style={{ textAlign: 'center', fontSize: '14px', fontWeight: 'bold', marginTop: '15px', lineHeight: '1.6' }}>
-                  Your account balance is <strong>${pendingDisplay.toFixed(2)}</strong> Please make your payment to cover the balance by the due date.<br />
+                  Your account balance is <strong>${formatMoney(pendingDisplay)}</strong> Please make your payment to cover the balance by the due date.<br />
                   Make all checks payable to Ceylon Engineers<br />
                   <span style={{ fontSize: '16px', fontWeight: 'bold' }}>Thank you for your business!</span><br />
                   <span style={{ fontSize: '13px', fontWeight: 'normal' }}>

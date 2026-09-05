@@ -31,7 +31,7 @@ const InvoiceViewPage = () => {
   return (
     <DashboardLayout title={`Invoice — ${invoiceData?.invoiceNo || ''}`}>
       {/* Action Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+      <div className="no-print" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
         <button onClick={() => navigate('/invoices')} className="btn-secondary">
           <ArrowLeft size={16} /> Back to Invoices
         </button>
@@ -46,7 +46,7 @@ const InvoiceViewPage = () => {
       </div>
 
       {/* Workspace Preview */}
-      <div style={{
+      <div className="print-workspace" style={{
         backgroundColor: '#475569',
         borderRadius: '16px',
         padding: '40px',
