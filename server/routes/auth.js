@@ -52,7 +52,8 @@ router.post('/login', loginLimiter, async (req, res) => {
       _id: user._id,
       username: user.username,
       fullName: user.fullName,
-      role: user.role
+      role: user.role,
+      avatar: user.avatar || 'avatar-1'
     });
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -65,7 +66,8 @@ router.get('/me', protect, async (req, res) => {
     _id: req.user._id,
     username: req.user.username,
     fullName: req.user.fullName,
-    role: req.user.role
+    role: req.user.role,
+    avatar: req.user.avatar || 'avatar-1'
   });
 });
 

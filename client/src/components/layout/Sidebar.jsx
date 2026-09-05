@@ -16,6 +16,8 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
+import UserAvatar from '../common/UserAvatar';
+
 const Sidebar = () => {
   const { user, logout } = useAuth();
 
@@ -63,18 +65,7 @@ const Sidebar = () => {
       <div style={{ padding: '16px', borderTop: '1px solid var(--border-color)', display: 'flex', flexDirection: 'column', gap: '12px' }}>
         {user && (
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '4px 8px' }}>
-            <div style={{
-              width: '32px',
-              height: '32px',
-              borderRadius: '50%',
-              backgroundColor: user.role === 'ADMIN' ? 'rgba(244, 122, 32, 0.2)' : 'var(--bg-main)',
-              color: user.role === 'ADMIN' ? 'var(--palette-orange)' : 'var(--text-secondary)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center'
-            }}>
-              {user.role === 'ADMIN' ? <Shield size={16} /> : <User size={16} />}
-            </div>
+            <UserAvatar avatarId={user.avatar || 'avatar-1'} name={user.fullName || user.username} size={32} />
             <div style={{ overflow: 'hidden' }}>
               <div style={{ fontSize: '13px', fontWeight: 'bold', color: 'var(--text-main)', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>
                 {user.fullName || user.username}

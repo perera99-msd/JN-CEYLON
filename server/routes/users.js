@@ -21,7 +21,7 @@ router.get('/', async (req, res) => {
 // POST /api/users - Create new user
 router.post('/', async (req, res) => {
   try {
-    const { username, fullName, password, role } = req.body;
+    const { username, fullName, password, role, avatar } = req.body;
 
     if (!username || !fullName || !password) {
       return res.status(400).json({ message: 'Username, Full Name, and Password are required' });
@@ -40,7 +40,8 @@ router.post('/', async (req, res) => {
       username: username.trim(),
       fullName: fullName.trim(),
       password: password.trim(),
-      role: role === 'ADMIN' ? 'ADMIN' : 'NORMAL'
+      role: role === 'ADMIN' ? 'ADMIN' : 'NORMAL',
+      avatar: avatar || 'avatar-1'
     });
 
     await newUser.save();
@@ -58,7 +59,8 @@ router.post('/', async (req, res) => {
       _id: newUser._id,
       username: newUser.username,
       fullName: newUser.fullName,
-      role: newUser.role
+      role: newUser.role,
+      avatar: newUser.avatar || 'avatar-1'
     });
   } catch (error) {
     res.status(400).json({ message: error.message });
@@ -68,7 +70,7 @@ router.post('/', async (req, res) => {
 // PUT /api/users/:id - Update user details or change password
 router.put('/:id', async (req, res) => {
   try {
-    const { fullName, role, password } = req.body;
+    const { fullName, role, password, avatar } = req.body;
     const user = await User.findById(req.params.id);
 
     if (!user) {
@@ -78,6 +80,9 @@ router.put('/:id', async (req, res) => {
     if (fullName) user.fullName = fullName.trim();
     if (role && (role === 'ADMIN' || role === 'NORMAL')) {
       user.role = role;
+    }
+    if (avatar) {
+      user.avatar = avatar;
     }
 
     let passwordChanged = false;
@@ -104,7 +109,8 @@ router.put('/:id', async (req, res) => {
       _id: user._id,
       username: user.username,
       fullName: user.fullName,
-      role: user.role
+      role: user.role,
+      avatar: user.avatar || 'avatar-1'
     });
   } catch (error) {
     res.status(400).json({ message: error.message });

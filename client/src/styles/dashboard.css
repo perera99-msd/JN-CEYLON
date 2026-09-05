@@ -153,38 +153,98 @@ body {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 0 36px;
+    padding: 0 32px;
     position: sticky;
     top: 0;
     z-index: 90;
+    gap: 16px;
+    min-width: 0;
 }
 
 .page-title {
-    font-size: 22px;
+    font-size: 20px;
     font-weight: 800;
     color: var(--palette-black);
     letter-spacing: -0.4px;
     margin: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-width: 0;
+    flex-shrink: 1;
+}
+
+.header-right-controls {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-shrink: 0;
+}
+
+.header-search-btn {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 7px 14px;
+    border-radius: 8px;
+    background-color: var(--bg-main);
+    border: 1px solid var(--border-color);
+    color: var(--text-secondary);
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    flex-shrink: 0;
+    white-space: nowrap;
+}
+
+.header-search-btn:hover {
+    border-color: var(--palette-orange);
+    color: var(--text-main);
+}
+
+.header-search-kbd {
+    font-size: 11px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-color);
+    color: var(--text-secondary);
 }
 
 .user-profile {
     display: flex;
     align-items: center;
-    gap: 14px;
+    gap: 12px;
+    flex-shrink: 0;
+    white-space: nowrap;
 }
 
-.user-avatar {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, var(--palette-orange), #ea580c);
-    color: #ffffff;
+.user-profile-info {
+    text-align: right;
     display: flex;
-    align-items: center;
+    flex-direction: column;
     justify-content: center;
-    font-weight: 700;
-    font-size: 15px;
-    box-shadow: 0 4px 10px rgba(244, 122, 32, 0.25);
+    flex-shrink: 0;
+    min-width: 0;
+}
+
+.user-profile-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-main);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 220px;
+    line-height: 1.25;
+}
+
+.user-profile-role {
+    font-size: 11px;
+    color: var(--text-secondary);
+    font-weight: 500;
+    line-height: 1.2;
+    margin-top: 2px;
 }
 
 .page-body {

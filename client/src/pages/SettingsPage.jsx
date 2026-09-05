@@ -5,9 +5,10 @@ import DashboardLayout from '../components/layout/DashboardLayout';
 import { UserPlus, Shield, User as UserIcon, Edit3, Trash2, Key, X, Check, Eye, EyeOff, Lock } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useConfirm } from '../contexts/ConfirmContext';
+import UserAvatar, { AVATAR_PRESETS } from '../components/common/UserAvatar';
 
 const SettingsPage = () => {
-  const { user: currentUser } = useAuth();
+  const { user: currentUser, updateCurrentUser } = useAuth();
   const confirm = useConfirm();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -23,6 +24,7 @@ const SettingsPage = () => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [role, setRole] = useState('NORMAL');
+  const [avatar, setAvatar] = useState('avatar-1');
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -49,6 +51,7 @@ const SettingsPage = () => {
     setConfirmPassword('');
     setShowPassword(false);
     setRole('NORMAL');
+    setAvatar('avatar-1');
     setShowModal(true);
   };
 
@@ -60,6 +63,7 @@ const SettingsPage = () => {
     setConfirmPassword('');
     setShowPassword(false);
     setRole(user.role);
+    setAvatar(user.avatar || 'avatar-1');
     setShowModal(true);
   };
 
@@ -69,7 +73,7 @@ const SettingsPage = () => {
       setSaving(true);
       if (editingUser) {
         // Update user
-        const payload = { fullName, role };
+        const payload = { fullName, role, avatar };
         if (password.trim() !== '') {
           if (password.length < 6) {
             toast.error('Password must be at least 6 characters long!');
@@ -83,10 +87,20 @@ const SettingsPage = () => {
           }
           payload.password = password.trim();
         }
-        await axios.put(`/api/users/${editingUser._id}`, payload);
+        const res = await axios.put(`/api/users/${editingUser._id}`, payload);
+        
+        // If logged-in user edited themselves, immediately update current user state
+        if (currentUser && editingUser._id === currentUser._id && updateCurrentUser) {
+          updateCurrentUser({
+            fullName,
+            role,
+            avatar
+          });
+        }
+
         toast.success(
           password.trim() !== ''
-            ? `User "${editingUser.username}" profile and password updated successfully!`
+            ? `User "${editingUser.username}" profile, avatar, and password updated successfully!`
             : `User "${editingUser.username}" updated successfully!`
         );
       } else {
@@ -106,7 +120,13 @@ const SettingsPage = () => {
           setSaving(false);
           return;
         }
-        await axios.post('/api/users', { username, fullName, password: password.trim(), role });
+        await axios.post('/api/users', { 
+          username: username.trim(), 
+          fullName: fullName.trim(), 
+          password: password.trim(), 
+          role,
+          avatar 
+        });
         toast.success(`User "${username}" created successfully!`);
       }
       setShowModal(false);
@@ -149,7 +169,7 @@ const SettingsPage = () => {
         <div>
           <h2 style={{ margin: 0, fontSize: '20px' }}>User Management Settings</h2>
           <p style={{ margin: '4px 0 0 0', color: 'var(--text-secondary)', fontSize: '14px' }}>
-            Manage user accounts, assign roles (Admin / Normal), and update passwords.
+            Manage user accounts, customize avatar styles, assign roles, and update passwords.
           </p>
         </div>
 
@@ -163,7 +183,7 @@ const SettingsPage = () => {
         <table className="data-table">
           <thead>
             <tr>
-              <th>Username</th>
+              <th>User</th>
               <th>Full Name</th>
               <th>System Role</th>
               <th>Created Date</th>
@@ -177,13 +197,27 @@ const SettingsPage = () => {
               </tr>
             ) : users.length > 0 ? (
               users.map((u) => {
-                const isSelf = u._id === currentUser._id;
+                const isSelf = u._id === currentUser?._id;
                 return (
                   <tr key={u._id}>
                     <td style={{ fontWeight: 'bold', color: 'var(--text-main)' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        {u.role === 'ADMIN' ? <Shield size={16} style={{ color: 'var(--palette-orange)' }} /> : <UserIcon size={16} style={{ color: 'var(--text-secondary)' }} />}
-                        {u.username} {isSelf && <span style={{ fontSize: '11px', background: 'rgba(244, 122, 32, 0.15)', color: 'var(--palette-orange)', padding: '2px 6px', borderRadius: '4px' }}>You</span>}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <UserAvatar avatarId={u.avatar || 'avatar-1'} name={u.fullName || u.username} size={30} />
+                        <div>
+                          <span>{u.username}</span>
+                          {isSelf && (
+                            <span style={{ 
+                              marginLeft: '6px', 
+                              fontSize: '11px', 
+                              background: 'rgba(244, 122, 32, 0.15)', 
+                              color: 'var(--palette-orange)', 
+                              padding: '2px 6px', 
+                              borderRadius: '4px' 
+                            }}>
+                              You
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </td>
                     <td>{u.fullName}</td>
@@ -199,7 +233,7 @@ const SettingsPage = () => {
                           onClick={() => handleOpenEditModal(u)}
                           className="btn-secondary"
                           style={{ padding: '6px 10px', fontSize: '13px' }}
-                          title="Edit User / Change Password"
+                          title="Edit User, Avatar, or Password"
                         >
                           <Edit3 size={14} /> Edit
                         </button>
@@ -238,9 +272,18 @@ const SettingsPage = () => {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          zIndex: 999
+          zIndex: 999,
+          padding: '20px'
         }}>
-          <div className="card" style={{ width: '420px', padding: '28px', backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-color)' }}>
+          <div className="card" style={{ 
+            width: '460px', 
+            maxHeight: '90vh', 
+            overflowY: 'auto', 
+            padding: '28px', 
+            backgroundColor: 'var(--bg-card)', 
+            border: '1px solid var(--border-color)',
+            borderRadius: '12px'
+          }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
               <h3 style={{ margin: 0, fontSize: '18px', display: 'flex', alignItems: 'center', gap: '8px' }}>
                 {editingUser ? <Edit3 size={18} /> : <UserPlus size={18} />}
@@ -252,6 +295,79 @@ const SettingsPage = () => {
             </div>
 
             <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              {/* Avatar Selector */}
+              <div className="form-group">
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                  <label style={{ margin: 0 }}>Select User Avatar</label>
+                  <span style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>Click an avatar icon</span>
+                </div>
+                <div style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(4, 1fr)',
+                  gap: '8px',
+                  padding: '10px',
+                  backgroundColor: 'var(--bg-main)',
+                  borderRadius: '8px',
+                  border: '1px solid var(--border-color)'
+                }}>
+                  {AVATAR_PRESETS.map((p) => {
+                    const isSelected = avatar === p.id;
+                    return (
+                      <button
+                        key={p.id}
+                        type="button"
+                        onClick={() => setAvatar(p.id)}
+                        style={{
+                          display: 'flex',
+                          flexDirection: 'column',
+                          alignItems: 'center',
+                          gap: '6px',
+                          padding: '8px 4px',
+                          borderRadius: '8px',
+                          border: isSelected ? `2px solid var(--palette-orange)` : '2px solid transparent',
+                          backgroundColor: isSelected ? 'rgba(244, 122, 32, 0.12)' : 'transparent',
+                          cursor: 'pointer',
+                          position: 'relative',
+                          transition: 'all 0.15s ease'
+                        }}
+                        title={p.name}
+                      >
+                        <UserAvatar avatarId={p.id} size={34} showRing={isSelected} />
+                        <span style={{
+                          fontSize: '10px',
+                          color: isSelected ? 'var(--palette-orange)' : 'var(--text-secondary)',
+                          fontWeight: isSelected ? 'bold' : 'normal',
+                          textAlign: 'center',
+                          whiteSpace: 'nowrap',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          width: '100%'
+                        }}>
+                          {p.name.split(' ')[0]}
+                        </span>
+                        {isSelected && (
+                          <div style={{
+                            position: 'absolute',
+                            top: '3px',
+                            right: '3px',
+                            width: '14px',
+                            height: '14px',
+                            borderRadius: '50%',
+                            backgroundColor: 'var(--palette-orange)',
+                            color: '#ffffff',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center'
+                          }}>
+                            <Check size={10} strokeWidth={3} />
+                          </div>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
               <div className="form-group">
                 <label>Username *</label>
                 <input

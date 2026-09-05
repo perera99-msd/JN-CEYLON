@@ -71,6 +71,10 @@ export const AuthProvider = ({ children }) => {
     return res.data;
   };
 
+  const updateCurrentUser = (userData) => {
+    setUser((prev) => (prev ? { ...prev, ...userData } : prev));
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -79,6 +83,7 @@ export const AuthProvider = ({ children }) => {
         login,
         logout,
         fetchCurrentUser,
+        updateCurrentUser,
         changePassword,
         isPasswordModalOpen,
         setIsPasswordModalOpen,
