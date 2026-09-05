@@ -19,8 +19,8 @@ const Header = ({ title }) => {
           className="header-search-btn"
           title="Search anything (Ctrl+K)"
         >
-          <Search size={16} color="var(--palette-orange)" style={{ flexShrink: 0 }} />
-          <span>Search ERP...</span>
+          <Search size={16} color="#64748b" style={{ flexShrink: 0 }} />
+          <span>Search or jump to...</span>
           <kbd className="header-search-kbd">
             Ctrl+K
           </kbd>

@@ -10,10 +10,25 @@ import {
   CreditCard, 
   Loader2, 
   ArrowRight,
-  Sparkles,
-  Command
+  FileSpreadsheet,
+  History,
+  Plus,
+  ArrowUpRight
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+
+const quickNavItems = [
+  { title: 'Quotations', subtitle: 'View & manage sales quotations', path: '/quotations', icon: FileText },
+  { title: 'Invoices', subtitle: 'Billing, receivables & payment tracking', path: '/invoices', icon: Receipt },
+  { title: 'Account Statements', subtitle: 'Customer ledger & account summaries', path: '/statements', icon: FileSpreadsheet },
+  { title: 'Client Companies', subtitle: 'Customer directory & address profiles', path: '/companies', icon: Building2 },
+  { title: 'Activity Log', subtitle: 'System audit trail & user events', path: '/activity', icon: History }
+];
+
+const quickActionItems = [
+  { title: 'New Quotation', subtitle: 'Create and issue a quotation', path: '/quotations/new', icon: Plus },
+  { title: 'New Invoice', subtitle: 'Create a direct customer invoice', path: '/invoices/new', icon: Plus }
+];
 
 const GlobalSearchModal = () => {
   const { isSearchModalOpen, setIsSearchModalOpen } = useAuth();
@@ -65,7 +80,7 @@ const GlobalSearchModal = () => {
       } finally {
         setLoading(false);
       }
-    }, 250);
+    }, 220);
 
     return () => clearTimeout(timer);
   }, [query]);
@@ -94,7 +109,7 @@ const GlobalSearchModal = () => {
         display: 'flex',
         alignItems: 'flex-start',
         justifyContent: 'center',
-        paddingTop: '90px',
+        paddingTop: '80px',
         zIndex: 9999,
         paddingLeft: '16px',
         paddingRight: '16px',
@@ -105,13 +120,13 @@ const GlobalSearchModal = () => {
       <div
         style={{
           backgroundColor: '#ffffff',
-          borderRadius: '16px',
+          borderRadius: '14px',
           border: '1px solid #e2e8f0',
-          boxShadow: '0 25px 60px -15px rgba(0, 0, 0, 0.22), 0 0 0 1px rgba(0, 0, 0, 0.05)',
+          boxShadow: '0 20px 50px -12px rgba(0, 0, 0, 0.18), 0 0 0 1px rgba(0, 0, 0, 0.04)',
           width: '100%',
-          maxWidth: '640px',
+          maxWidth: '600px',
           overflow: 'hidden',
-          animation: 'slideUpModal 0.2s cubic-bezier(0.16, 1, 0.3, 1)'
+          animation: 'slideUpModal 0.18s cubic-bezier(0.16, 1, 0.3, 1)'
         }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -120,29 +135,29 @@ const GlobalSearchModal = () => {
           display: 'flex',
           alignItems: 'center',
           gap: '12px',
-          padding: '16px 20px',
+          padding: '14px 18px',
           borderBottom: '1px solid #f1f5f9',
           backgroundColor: '#ffffff'
         }}>
-          <Search size={22} color="var(--palette-orange)" style={{ flexShrink: 0 }} />
+          <Search size={18} color="#64748b" style={{ flexShrink: 0 }} />
           <input
             ref={inputRef}
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search quotations, invoices, companies, or payments..."
+            placeholder="Search or jump to..."
             style={{
               flex: 1,
               background: 'none',
               border: 'none',
               outline: 'none',
-              fontSize: '16px',
+              fontSize: '15px',
               fontWeight: 500,
               color: '#0f172a',
               fontFamily: 'inherit'
             }}
           />
-          {loading && <Loader2 size={18} className="spin" color="var(--palette-orange)" />}
+          {loading && <Loader2 size={16} className="spin" color="#64748b" />}
           {query && (
             <button
               type="button"
@@ -158,100 +173,147 @@ const GlobalSearchModal = () => {
               }}
               title="Clear search"
             >
-              <X size={16} />
+              <X size={15} />
             </button>
           )}
-          <button
-            type="button"
-            onClick={() => setIsSearchModalOpen(false)}
-            style={{
-              background: '#f1f5f9',
-              border: 'none',
-              color: '#64748b',
-              cursor: 'pointer',
-              padding: '6px',
-              borderRadius: '8px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              transition: 'all 0.15s ease'
-            }}
-            title="Close (Esc)"
-          >
-            <X size={16} />
-          </button>
+          <kbd style={{
+            fontSize: '11px',
+            padding: '2px 6px',
+            borderRadius: '4px',
+            backgroundColor: '#f1f5f9',
+            border: '1px solid #e2e8f0',
+            color: '#64748b',
+            fontWeight: 600,
+            lineHeight: 1
+          }}>
+            ESC
+          </kbd>
         </div>
 
-        {/* Search Content */}
-        <div style={{ maxHeight: '420px', overflowY: 'auto', padding: '12px', backgroundColor: '#ffffff' }}>
-          {query.trim().length >= 2 && totalResults === 0 && !loading && (
-            <div style={{ padding: '40px 16px', textAlign: 'center', color: '#64748b' }}>
-              <div style={{ 
-                width: '44px', 
-                height: '44px', 
-                borderRadius: '50%', 
-                backgroundColor: '#f1f5f9', 
-                color: '#94a3b8', 
-                display: 'flex', 
-                alignItems: 'center', 
-                justifyContent: 'center', 
-                margin: '0 auto 12px auto' 
+        {/* Content Area */}
+        <div style={{ maxHeight: '420px', overflowY: 'auto', padding: '10px', backgroundColor: '#ffffff' }}>
+          {/* Empty search: Quick Navigation & Actions */}
+          {query.trim().length < 2 && (
+            <div style={{ padding: '4px' }}>
+              <div style={{
+                fontSize: '11px',
+                fontWeight: 700,
+                color: '#94a3b8',
+                textTransform: 'uppercase',
+                letterSpacing: '0.06em',
+                padding: '6px 12px 4px 12px'
               }}>
-                <Search size={22} />
+                Navigation
               </div>
-              <div style={{ fontWeight: 600, fontSize: '15px', color: '#0f172a' }}>No results found</div>
-              <div style={{ fontSize: '13px', marginTop: '4px', color: '#64748b' }}>
-                We couldn't find anything matching "<strong>{query}</strong>". Try searching by quotation number, invoice number, or company name.
+              {quickNavItems.map((item) => (
+                <div
+                  key={item.path}
+                  onClick={() => handleSelect(item.path)}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    padding: '9px 12px',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    transition: 'background-color 0.12s ease'
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f8fafc'}
+                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <div style={{
+                      width: '28px',
+                      height: '28px',
+                      borderRadius: '6px',
+                      backgroundColor: '#f1f5f9',
+                      color: '#475569',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      flexShrink: 0
+                    }}>
+                      <item.icon size={15} />
+                    </div>
+                    <div>
+                      <div style={{ fontWeight: 600, fontSize: '13px', color: '#0f172a' }}>{item.title}</div>
+                      <div style={{ fontSize: '11.5px', color: '#64748b' }}>{item.subtitle}</div>
+                    </div>
+                  </div>
+                  <span style={{ fontSize: '11px', color: '#94a3b8', fontWeight: 500 }}>Jump</span>
+                </div>
+              ))}
+
+              <div style={{
+                fontSize: '11px',
+                fontWeight: 700,
+                color: '#94a3b8',
+                textTransform: 'uppercase',
+                letterSpacing: '0.06em',
+                padding: '12px 12px 4px 12px'
+              }}>
+                Actions
               </div>
+              {quickActionItems.map((item) => (
+                <div
+                  key={item.path}
+                  onClick={() => handleSelect(item.path)}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    padding: '9px 12px',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    transition: 'background-color 0.12s ease'
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f8fafc'}
+                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <div style={{
+                      width: '28px',
+                      height: '28px',
+                      borderRadius: '6px',
+                      backgroundColor: 'rgba(244, 122, 32, 0.1)',
+                      color: 'var(--palette-orange)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      flexShrink: 0
+                    }}>
+                      <item.icon size={15} />
+                    </div>
+                    <div>
+                      <div style={{ fontWeight: 600, fontSize: '13px', color: '#0f172a' }}>{item.title}</div>
+                      <div style={{ fontSize: '11.5px', color: '#64748b' }}>{item.subtitle}</div>
+                    </div>
+                  </div>
+                  <ArrowUpRight size={14} color="#94a3b8" />
+                </div>
+              ))}
             </div>
           )}
 
-          {query.trim().length < 2 && (
-            <div style={{ padding: '32px 20px', textAlign: 'center' }}>
-              <div style={{
-                width: '48px',
-                height: '48px',
-                borderRadius: '50%',
-                backgroundColor: 'rgba(244, 122, 32, 0.12)',
-                color: 'var(--palette-orange)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                margin: '0 auto 14px auto'
-              }}>
-                <Sparkles size={24} />
-              </div>
-              <div style={{ fontWeight: 700, fontSize: '15px', color: '#0f172a' }}>
-                Search Across JN Ceylon ERP
-              </div>
-              <div style={{ fontSize: '13px', color: '#64748b', marginTop: '4px', maxWidth: '380px', margin: '4px auto 16px auto', lineHeight: '1.4' }}>
-                Type at least 2 characters to search across all Quotations, Invoices, Client Companies, and Payments.
-              </div>
-
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', justifyContent: 'center' }}>
-                <span style={{ fontSize: '12px', padding: '4px 10px', backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '6px', color: '#475569' }}>
-                  📄 Quotation (e.g. 158RC...)
-                </span>
-                <span style={{ fontSize: '12px', padding: '4px 10px', backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '6px', color: '#475569' }}>
-                  🧾 Invoice (e.g. 111NVO...)
-                </span>
-                <span style={{ fontSize: '12px', padding: '4px 10px', backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '6px', color: '#475569' }}>
-                  🏢 Company Name / Code
-                </span>
-                <span style={{ fontSize: '12px', padding: '4px 10px', backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '6px', color: '#475569' }}>
-                  💳 Payment Reference
-                </span>
-              </div>
+          {/* No Results */}
+          {query.trim().length >= 2 && totalResults === 0 && !loading && (
+            <div style={{ padding: '36px 16px', textAlign: 'center', color: '#64748b' }}>
+              <p style={{ margin: 0, fontSize: '14px', fontWeight: 600, color: '#0f172a' }}>
+                No matching records found
+              </p>
+              <p style={{ margin: '4px 0 0 0', fontSize: '12.5px', color: '#64748b' }}>
+                Try searching by document number (e.g. 158RC, 111INVO) or customer name.
+              </p>
             </div>
           )}
 
           {/* Quotations */}
           {results.quotations.length > 0 && (
-            <div style={{ marginBottom: '14px' }}>
+            <div style={{ marginBottom: '10px' }}>
               <div style={{ 
                 fontSize: '11px', 
                 fontWeight: 700, 
-                color: 'var(--palette-orange)', 
+                color: '#64748b', 
                 textTransform: 'uppercase', 
                 letterSpacing: '0.06em', 
                 padding: '4px 8px',
@@ -269,20 +331,20 @@ const GlobalSearchModal = () => {
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'space-between',
-                    padding: '10px 14px',
-                    borderRadius: '10px',
+                    padding: '9px 12px',
+                    borderRadius: '8px',
                     cursor: 'pointer',
-                    transition: 'all 0.15s ease',
-                    marginBottom: '4px'
+                    transition: 'all 0.12s ease',
+                    marginBottom: '2px'
                   }}
                   onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f8fafc'}
                   onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
                 >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                     <div style={{
-                      width: '32px',
-                      height: '32px',
-                      borderRadius: '8px',
+                      width: '28px',
+                      height: '28px',
+                      borderRadius: '6px',
                       backgroundColor: 'rgba(244, 122, 32, 0.1)',
                       color: 'var(--palette-orange)',
                       display: 'flex',
@@ -290,16 +352,16 @@ const GlobalSearchModal = () => {
                       justifyContent: 'center',
                       flexShrink: 0
                     }}>
-                      <FileText size={16} />
+                      <FileText size={15} />
                     </div>
                     <div>
-                      <div style={{ fontWeight: 600, fontSize: '13.5px', color: '#0f172a' }}>{q.quotationNo}</div>
-                      <div style={{ fontSize: '12px', color: '#64748b' }}>{q.company?.name || q.custCode} • Date: {q.date}</div>
+                      <div style={{ fontWeight: 600, fontSize: '13px', color: '#0f172a' }}>{q.quotationNo}</div>
+                      <div style={{ fontSize: '11.5px', color: '#64748b' }}>{q.company?.name || q.custCode} • {q.date}</div>
                     </div>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                     <span style={{ fontWeight: 700, fontSize: '13px', color: '#0f172a' }}>${(q.grandTotal || 0).toFixed(2)}</span>
-                    <ArrowRight size={14} color="#94a3b8" />
+                    <ArrowRight size={13} color="#94a3b8" />
                   </div>
                 </div>
               ))}
@@ -308,11 +370,11 @@ const GlobalSearchModal = () => {
 
           {/* Invoices */}
           {results.invoices.length > 0 && (
-            <div style={{ marginBottom: '14px' }}>
+            <div style={{ marginBottom: '10px' }}>
               <div style={{ 
                 fontSize: '11px', 
                 fontWeight: 700, 
-                color: '#2563eb', 
+                color: '#64748b', 
                 textTransform: 'uppercase', 
                 letterSpacing: '0.06em', 
                 padding: '4px 8px',
@@ -330,20 +392,20 @@ const GlobalSearchModal = () => {
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'space-between',
-                    padding: '10px 14px',
-                    borderRadius: '10px',
+                    padding: '9px 12px',
+                    borderRadius: '8px',
                     cursor: 'pointer',
-                    transition: 'all 0.15s ease',
-                    marginBottom: '4px'
+                    transition: 'all 0.12s ease',
+                    marginBottom: '2px'
                   }}
                   onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f8fafc'}
                   onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
                 >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                     <div style={{
-                      width: '32px',
-                      height: '32px',
-                      borderRadius: '8px',
+                      width: '28px',
+                      height: '28px',
+                      borderRadius: '6px',
                       backgroundColor: 'rgba(37, 99, 235, 0.1)',
                       color: '#2563eb',
                       display: 'flex',
@@ -351,16 +413,16 @@ const GlobalSearchModal = () => {
                       justifyContent: 'center',
                       flexShrink: 0
                     }}>
-                      <Receipt size={16} />
+                      <Receipt size={15} />
                     </div>
                     <div>
-                      <div style={{ fontWeight: 600, fontSize: '13.5px', color: '#0f172a' }}>{inv.invoiceNo}</div>
-                      <div style={{ fontSize: '12px', color: '#64748b' }}>PO: {inv.poNumber || 'N/A'} • {inv.company?.name || inv.custCode}</div>
+                      <div style={{ fontWeight: 600, fontSize: '13px', color: '#0f172a' }}>{inv.invoiceNo}</div>
+                      <div style={{ fontSize: '11.5px', color: '#64748b' }}>PO: {inv.poNumber || 'N/A'} • {inv.company?.name || inv.custCode}</div>
                     </div>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                     <span style={{ fontWeight: 700, fontSize: '13px', color: '#0f172a' }}>${(inv.grandTotal || 0).toFixed(2)}</span>
-                    <ArrowRight size={14} color="#94a3b8" />
+                    <ArrowRight size={13} color="#94a3b8" />
                   </div>
                 </div>
               ))}
@@ -369,11 +431,11 @@ const GlobalSearchModal = () => {
 
           {/* Companies */}
           {results.companies.length > 0 && (
-            <div style={{ marginBottom: '14px' }}>
+            <div style={{ marginBottom: '10px' }}>
               <div style={{ 
                 fontSize: '11px', 
                 fontWeight: 700, 
-                color: '#10b981', 
+                color: '#64748b', 
                 textTransform: 'uppercase', 
                 letterSpacing: '0.06em', 
                 padding: '4px 8px',
@@ -391,20 +453,20 @@ const GlobalSearchModal = () => {
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'space-between',
-                    padding: '10px 14px',
-                    borderRadius: '10px',
+                    padding: '9px 12px',
+                    borderRadius: '8px',
                     cursor: 'pointer',
-                    transition: 'all 0.15s ease',
-                    marginBottom: '4px'
+                    transition: 'all 0.12s ease',
+                    marginBottom: '2px'
                   }}
                   onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f8fafc'}
                   onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
                 >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                     <div style={{
-                      width: '32px',
-                      height: '32px',
-                      borderRadius: '8px',
+                      width: '28px',
+                      height: '28px',
+                      borderRadius: '6px',
                       backgroundColor: 'rgba(16, 185, 129, 0.1)',
                       color: '#10b981',
                       display: 'flex',
@@ -412,14 +474,14 @@ const GlobalSearchModal = () => {
                       justifyContent: 'center',
                       flexShrink: 0
                     }}>
-                      <Building2 size={16} />
+                      <Building2 size={15} />
                     </div>
                     <div>
-                      <div style={{ fontWeight: 600, fontSize: '13.5px', color: '#0f172a' }}>{c.name}</div>
-                      <div style={{ fontSize: '12px', color: '#64748b' }}>Code: {c.custCode || 'N/A'} • {c.contactEmail || c.contactPhone || 'Client Account'}</div>
+                      <div style={{ fontWeight: 600, fontSize: '13px', color: '#0f172a' }}>{c.name}</div>
+                      <div style={{ fontSize: '11.5px', color: '#64748b' }}>Code: {c.custCode || 'N/A'} • {c.contactEmail || c.contactPhone || 'Client Account'}</div>
                     </div>
                   </div>
-                  <ArrowRight size={14} color="#94a3b8" />
+                  <ArrowRight size={13} color="#94a3b8" />
                 </div>
               ))}
             </div>
@@ -431,7 +493,7 @@ const GlobalSearchModal = () => {
               <div style={{ 
                 fontSize: '11px', 
                 fontWeight: 700, 
-                color: '#8b5cf6', 
+                color: '#64748b', 
                 textTransform: 'uppercase', 
                 letterSpacing: '0.06em', 
                 padding: '4px 8px',
@@ -449,20 +511,20 @@ const GlobalSearchModal = () => {
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'space-between',
-                    padding: '10px 14px',
-                    borderRadius: '10px',
+                    padding: '9px 12px',
+                    borderRadius: '8px',
                     cursor: 'pointer',
-                    transition: 'all 0.15s ease',
-                    marginBottom: '4px'
+                    transition: 'all 0.12s ease',
+                    marginBottom: '2px'
                   }}
                   onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f8fafc'}
                   onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
                 >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                     <div style={{
-                      width: '32px',
-                      height: '32px',
-                      borderRadius: '8px',
+                      width: '28px',
+                      height: '28px',
+                      borderRadius: '6px',
                       backgroundColor: 'rgba(139, 92, 246, 0.1)',
                       color: '#8b5cf6',
                       display: 'flex',
@@ -470,16 +532,16 @@ const GlobalSearchModal = () => {
                       justifyContent: 'center',
                       flexShrink: 0
                     }}>
-                      <CreditCard size={16} />
+                      <CreditCard size={15} />
                     </div>
                     <div>
-                      <div style={{ fontWeight: 600, fontSize: '13.5px', color: '#0f172a' }}>Invoice: {p.invoice?.invoiceNo || 'N/A'}</div>
-                      <div style={{ fontSize: '12px', color: '#64748b' }}>{p.company?.name || ''} • Ref: {p.reference || 'N/A'}</div>
+                      <div style={{ fontWeight: 600, fontSize: '13px', color: '#0f172a' }}>Invoice: {p.invoice?.invoiceNo || 'N/A'}</div>
+                      <div style={{ fontSize: '11.5px', color: '#64748b' }}>{p.company?.name || ''} • Ref: {p.reference || 'N/A'}</div>
                     </div>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                     <span style={{ fontWeight: 700, fontSize: '13px', color: '#10b981' }}>+${(p.amount || 0).toFixed(2)}</span>
-                    <ArrowRight size={14} color="#94a3b8" />
+                    <ArrowRight size={13} color="#94a3b8" />
                   </div>
                 </div>
               ))}
@@ -489,17 +551,17 @@ const GlobalSearchModal = () => {
 
         {/* Footer */}
         <div style={{
-          padding: '12px 20px',
+          padding: '10px 18px',
           borderTop: '1px solid #f1f5f9',
           backgroundColor: '#f8fafc',
-          fontSize: '12px',
+          fontSize: '11.5px',
           color: '#64748b',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between'
         }}>
-          <span>Press <kbd style={{ padding: '2px 6px', borderRadius: '4px', background: '#ffffff', border: '1px solid #e2e8f0', fontWeight: 600, color: '#475569' }}>Esc</kbd> to close</span>
-          <span>Shortcut: <kbd style={{ padding: '2px 6px', borderRadius: '4px', background: '#ffffff', border: '1px solid #e2e8f0', fontWeight: 600, color: '#475569' }}>Ctrl+K</kbd></span>
+          <span>Press <kbd style={{ padding: '1px 5px', borderRadius: '4px', background: '#ffffff', border: '1px solid #e2e8f0', fontWeight: 600, color: '#475569' }}>Esc</kbd> to close</span>
+          <span>Shortcut: <kbd style={{ padding: '1px 5px', borderRadius: '4px', background: '#ffffff', border: '1px solid #e2e8f0', fontWeight: 600, color: '#475569' }}>Ctrl+K</kbd></span>
         </div>
       </div>
     </div>
