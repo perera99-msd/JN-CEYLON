@@ -120,21 +120,22 @@ const ActivityLogPage = () => {
         {/* Filters and Search Bar */}
         <div style={{
           backgroundColor: 'var(--card-bg)',
-          borderRadius: '10px',
-          padding: '16px',
+          borderRadius: '12px',
+          padding: '16px 20px',
           border: '1px solid var(--border-color)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
           flexWrap: 'wrap',
-          gap: '12px'
+          gap: '12px',
+          boxShadow: '0 1px 3px rgba(0,0,0,0.03)'
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <Filter size={16} color="var(--text-secondary)" />
               <select
-                className="form-input"
-                style={{ width: 'auto', minWidth: '130px', padding: '6px 10px', fontSize: '13px' }}
+                className="filter-select"
+                style={{ width: 'auto', minWidth: '135px' }}
                 value={actionFilter}
                 onChange={(e) => setActionFilter(e.target.value)}
               >
@@ -149,8 +150,8 @@ const ActivityLogPage = () => {
             </div>
 
             <select
-              className="form-input"
-              style={{ width: 'auto', minWidth: '130px', padding: '6px 10px', fontSize: '13px' }}
+              className="filter-select"
+              style={{ width: 'auto', minWidth: '140px' }}
               value={entityFilter}
               onChange={(e) => setEntityFilter(e.target.value)}
             >
@@ -163,17 +164,18 @@ const ActivityLogPage = () => {
             </select>
           </div>
 
-          <form onSubmit={handleSearchSubmit} style={{ display: 'flex', gap: '8px' }}>
-            <input
-              type="text"
-              className="form-input"
-              style={{ width: '220px', padding: '6px 12px', fontSize: '13px' }}
-              placeholder="Search activity..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
-            <button type="submit" className="btn btn-secondary" style={{ padding: '6px 12px' }}>
-              <Search size={15} />
+          <form onSubmit={handleSearchSubmit} style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+            <div className="search-bar-integrated" style={{ width: '250px' }}>
+              <Search size={15} className="search-icon" />
+              <input
+                type="text"
+                placeholder="Search activity..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+            </div>
+            <button type="submit" className="btn-secondary" style={{ height: '40px', padding: '0 14px' }}>
+              Search
             </button>
           </form>
         </div>

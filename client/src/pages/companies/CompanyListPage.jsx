@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 import DashboardLayout from '../../components/layout/DashboardLayout';
-import { Plus, Edit3, Trash2, CheckCircle } from 'lucide-react';
+import { Plus, Edit3, Trash2, CheckCircle, Building2, X } from 'lucide-react';
 import { useConfirm } from '../../contexts/ConfirmContext';
 
 const CompanyListPage = () => {
@@ -171,78 +171,82 @@ const CompanyListPage = () => {
 
       {/* Add / Edit Modal */}
       {modalOpen && (
-        <div style={{
-          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-          backgroundColor: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000
-        }}>
-          <div style={{
-            backgroundColor: 'var(--bg-card)', padding: '32px', borderRadius: '12px', width: '460px',
-            border: '1px solid var(--border-color)', boxShadow: '0 10px 30px rgba(0,0,0,0.5)'
-          }}>
-            <h3 style={{ marginTop: 0 }}>{editingId ? 'Edit Company' : 'Add New Company'}</h3>
+        <div className="modal-backdrop-custom" onClick={() => setModalOpen(false)}>
+          <div className="modal-card-custom" style={{ maxWidth: '480px' }} onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header-custom">
+              <h3 className="modal-title-custom">
+                <Building2 size={18} color="var(--palette-orange)" /> {editingId ? 'Edit Company' : 'Add New Company'}
+              </h3>
+              <button onClick={() => setModalOpen(false)} className="modal-close-btn" aria-label="Close modal">
+                <X size={18} />
+              </button>
+            </div>
 
-            <form onSubmit={handleSave} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              <div className="form-group">
-                <label>Company Name</label>
-                <input
-                  type="text"
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  placeholder="e.g. Constance Halaveli"
-                  required
-                />
+            <form onSubmit={handleSave}>
+              <div className="modal-body-custom" style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                <div className="form-group" style={{ marginBottom: 0 }}>
+                  <label>Company Name *</label>
+                  <input
+                    type="text"
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    placeholder="e.g. Constance Halaveli"
+                    required
+                    autoFocus
+                  />
+                </div>
+
+                <div className="form-group" style={{ marginBottom: 0 }}>
+                  <label>Customer Code *</label>
+                  <input
+                    type="text"
+                    value={formData.custCode}
+                    onChange={(e) => setFormData({ ...formData, custCode: e.target.value })}
+                    placeholder="e.g. Halav 05"
+                    required
+                  />
+                </div>
+
+                <div className="form-group" style={{ marginBottom: 0 }}>
+                  <label>Address Line 1</label>
+                  <input
+                    type="text"
+                    value={formData.address.line1}
+                    onChange={(e) => setFormData({
+                      ...formData,
+                      address: { ...formData.address, line1: e.target.value }
+                    })}
+                    placeholder="e.g. AlifuAlifu Atoll, Halaveli"
+                  />
+                </div>
+
+                <div className="form-group" style={{ marginBottom: 0 }}>
+                  <label>Address Line 2 (Postal / City)</label>
+                  <input
+                    type="text"
+                    value={formData.address.line2}
+                    onChange={(e) => setFormData({
+                      ...formData,
+                      address: { ...formData.address, line2: e.target.value }
+                    })}
+                    placeholder="e.g. 09130"
+                  />
+                </div>
+
+                <div className="form-group" style={{ marginBottom: 0 }}>
+                  <label>Country</label>
+                  <input
+                    type="text"
+                    value={formData.address.country}
+                    onChange={(e) => setFormData({
+                      ...formData,
+                      address: { ...formData.address, country: e.target.value }
+                    })}
+                  />
+                </div>
               </div>
 
-              <div className="form-group">
-                <label>Customer Code</label>
-                <input
-                  type="text"
-                  value={formData.custCode}
-                  onChange={(e) => setFormData({ ...formData, custCode: e.target.value })}
-                  placeholder="e.g. Halav 05"
-                  required
-                />
-              </div>
-
-              <div className="form-group">
-                <label>Address Line 1</label>
-                <input
-                  type="text"
-                  value={formData.address.line1}
-                  onChange={(e) => setFormData({
-                    ...formData,
-                    address: { ...formData.address, line1: e.target.value }
-                  })}
-                  placeholder="e.g. AlifuAlifu Atoll, Halaveli"
-                />
-              </div>
-
-              <div className="form-group">
-                <label>Address Line 2 (Postal / City)</label>
-                <input
-                  type="text"
-                  value={formData.address.line2}
-                  onChange={(e) => setFormData({
-                    ...formData,
-                    address: { ...formData.address, line2: e.target.value }
-                  })}
-                  placeholder="e.g. 09130"
-                />
-              </div>
-
-              <div className="form-group">
-                <label>Country</label>
-                <input
-                  type="text"
-                  value={formData.address.country}
-                  onChange={(e) => setFormData({
-                    ...formData,
-                    address: { ...formData.address, country: e.target.value }
-                  })}
-                />
-              </div>
-
-              <div style={{ display: 'flex', gap: '12px', marginTop: '12px', justifyContent: 'flex-end' }}>
+              <div className="modal-footer-custom">
                 <button type="button" onClick={() => setModalOpen(false)} className="btn-secondary">Cancel</button>
                 <button type="submit" className="btn-primary">Save Company</button>
               </div>

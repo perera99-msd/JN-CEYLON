@@ -105,7 +105,8 @@ const RecycleBinPage = () => {
       {/* Controls */}
       <div style={{ display: 'flex', gap: '12px', alignItems: 'center', marginBottom: '24px' }}>
         <form onSubmit={(e) => e.preventDefault()} style={{ display: 'flex', gap: '8px' }}>
-          <div className="form-group" style={{ margin: 0, minWidth: '240px' }}>
+          <div className="search-bar-integrated" style={{ minWidth: '280px' }}>
+            <Search size={16} className="search-icon" />
             <input
               type="text"
               placeholder="Search deleted items..."
@@ -113,9 +114,6 @@ const RecycleBinPage = () => {
               onChange={(e) => setSearch(e.target.value)}
             />
           </div>
-          <button type="submit" className="btn-secondary">
-            <Search size={16} /> Search
-          </button>
         </form>
 
         <select

@@ -111,18 +111,16 @@ const QuotationListPage = () => {
       {/* Top Controls */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', flexWrap: 'wrap', gap: '12px' }}>
         <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
-          <form onSubmit={handleSearch} style={{ display: 'flex', gap: '8px' }}>
-            <div className="form-group" style={{ margin: 0, minWidth: '240px' }}>
+          <form onSubmit={handleSearch} style={{ display: 'flex', alignItems: 'center' }}>
+            <div className="search-bar-integrated">
+              <Search size={16} />
               <input
                 type="text"
-                placeholder="Search Quotation No..."
+                placeholder="Search quotation no, customer..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
               />
             </div>
-            <button type="submit" className="btn-secondary">
-              <Search size={16} /> Search
-            </button>
           </form>
 
           <select
@@ -251,31 +249,42 @@ const QuotationListPage = () => {
 
       {/* Convert to Invoice PO Modal */}
       {poModalItem && (
-        <div style={{
-          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-          backgroundColor: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000
-        }}>
-          <div style={{
-            backgroundColor: 'var(--bg-card)', padding: '32px', borderRadius: '12px', width: '420px',
-            border: '1px solid var(--border-color)', boxShadow: '0 10px 30px rgba(0,0,0,0.5)'
-          }}>
-            <h3 style={{ marginTop: 0 }}>Create Invoice from PO</h3>
-            <p style={{ color: 'var(--text-secondary)', fontSize: '14px' }}>
-              Quotation: <strong>{poModalItem.quotationNo}</strong>
-            </p>
-
-            <div className="form-group" style={{ marginBottom: '20px' }}>
-              <label>Purchase Order (PO) Number received from client:</label>
-              <input
-                type="text"
-                placeholder="e.g. 55806"
-                value={poNumberInput}
-                onChange={(e) => setPoNumberInput(e.target.value)}
-                autoFocus
-              />
+        <div className="modal-backdrop-custom" onClick={() => setPoModalItem(null)}>
+          <div className="modal-card-custom" style={{ maxWidth: '440px' }} onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header-custom">
+              <h3 className="modal-title-custom">
+                <FileText size={18} color="var(--palette-orange)" /> Create Invoice from PO
+              </h3>
+              <button onClick={() => setPoModalItem(null)} className="modal-close-btn">
+                <X size={18} />
+              </button>
             </div>
 
-            <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+            <div className="modal-body-custom">
+              <div style={{
+                padding: '10px 14px',
+                backgroundColor: 'var(--bg-main)',
+                borderRadius: '8px',
+                border: '1px solid var(--border-color)',
+                marginBottom: '16px',
+                fontSize: '13px'
+              }}>
+                Converting Quotation: <strong style={{ color: 'var(--palette-orange)' }}>{poModalItem.quotationNo}</strong>
+              </div>
+
+              <div className="form-group" style={{ marginBottom: 0 }}>
+                <label>Purchase Order (PO) Number *</label>
+                <input
+                  type="text"
+                  placeholder="e.g. 55806"
+                  value={poNumberInput}
+                  onChange={(e) => setPoNumberInput(e.target.value)}
+                  autoFocus
+                />
+              </div>
+            </div>
+
+            <div className="modal-footer-custom">
               <button onClick={() => setPoModalItem(null)} className="btn-secondary">Cancel</button>
               <button onClick={handleCreateInvoiceWithPO} className="btn-primary">Generate Invoice</button>
             </div>

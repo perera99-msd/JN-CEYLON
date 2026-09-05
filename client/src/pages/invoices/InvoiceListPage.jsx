@@ -4,7 +4,7 @@ import toast from 'react-hot-toast';
 import DashboardLayout from '../../components/layout/DashboardLayout';
 import Pagination from '../../components/common/Pagination';
 import SkeletonTable from '../../components/common/SkeletonTable';
-import { Plus, Search, Filter, Eye, Printer, Edit3, Trash2, DollarSign, CreditCard, Download, Calendar } from 'lucide-react';
+import { Plus, Search, Filter, Eye, Printer, Edit3, Trash2, DollarSign, CreditCard, Download, Calendar, X } from 'lucide-react';
 import { printDocumentInIframe } from '../../utils/print';
 import { useNavigate } from 'react-router-dom';
 import { useConfirm } from '../../contexts/ConfirmContext';
@@ -34,32 +34,41 @@ const InvoiceListPage = () => {
     fetchInvoices(1);
   }, [statusFilter]);
 
-  const fetchInvoices = async (targetPage = 1) => {
+  const fetchInvoices = async (page = 1) => {
     try {
       setLoading(true);
-      const res = await axios.get('/api/invoices', {
-        params: {
-          status: statusFilter,
-          search: search.trim() || undefined,
-          page: targetPage,
-          limit: 15
-        }
-      });
-      if (res.data.pagination) {
-        setInvoices(res.data.data || []);
+      const params = { page, limit: 15 };
+      if (statusFilter !== 'ALL') params.status = statusFilter;
+      if (search.trim()) params.search = search.trim();
+
+      const res = await axios.get('/api/invoices', { params });
+      if (res.data.data) {
+        setInvoices(res.data.data);
         setPagination(res.data.pagination);
       } else {
-        setInvoices(res.data || []);
+        setInvoices(res.data);
       }
     } catch (error) {
-      console.error('Error fetching invoices:', error);
+      toast.error('Failed to load invoices');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleExportCSV = () => {
-    window.open('/api/invoices/export', '_blank');
+  const handleExportCSV = async () => {
+    try {
+      const response = await axios.get('/api/invoices/export', { responseType: 'blob' });
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `invoices_${new Date().toISOString().slice(0, 10)}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      toast.success('Invoices exported successfully');
+    } catch (err) {
+      toast.error('Failed to export invoices');
+    }
   };
 
   const handleOpenDueDateModal = (inv) => {
@@ -81,16 +90,14 @@ const InvoiceListPage = () => {
       setSavingDueDate(true);
       const parts = newDueDate.split('-');
       const formattedDate = `${parts[2]}.${parts[1]}.${parts[0]}`;
-
       await axios.patch(`/api/invoices/${dueDateModalItem._id}/due-date`, {
         dueDate: formattedDate
       });
-
-      toast.success('Due date updated successfully!');
+      toast.success('Due date updated successfully');
       setDueDateModalItem(null);
-      fetchInvoices();
-    } catch (error) {
-      toast.error(error.response?.data?.message || 'Error updating due date');
+      fetchInvoices(pagination.page);
+    } catch (err) {
+      toast.error('Failed to update due date');
     } finally {
       setSavingDueDate(false);
     }
@@ -98,40 +105,18 @@ const InvoiceListPage = () => {
 
   const handleSearch = (e) => {
     e.preventDefault();
-    fetchInvoices();
-  };
-
-  const handleDelete = async (id, invoiceNo) => {
-    const isConfirmed = await confirm({
-      title: 'Delete Invoice',
-      message: `Are you sure you want to delete invoice "${invoiceNo}"? This action cannot be undone.`,
-      confirmText: 'Delete Invoice',
-      type: 'danger'
-    });
-
-    if (isConfirmed) {
-      try {
-        await axios.delete(`/api/invoices/${id}`);
-        toast.success(`Invoice "${invoiceNo}" deleted successfully`);
-        fetchInvoices();
-      } catch (error) {
-        toast.error(error.response?.data?.message || 'Error deleting invoice');
-      }
-    }
+    fetchInvoices(1);
   };
 
   const handleRecordPayment = async () => {
-    if (!paymentModalItem) return;
-    const amountNum = parseFloat(payAmount);
-    if (!amountNum || amountNum <= 0) {
-      toast.error('Please enter a valid payment amount!');
+    if (!paymentModalItem || !payAmount || parseFloat(payAmount) <= 0) {
+      toast.error('Please enter a valid payment amount');
       return;
     }
-
     try {
       await axios.post('/api/payments', {
-        invoiceId: paymentModalItem._id,
-        amount: amountNum,
+        invoice: paymentModalItem._id,
+        amount: parseFloat(payAmount),
         method: payMethod,
         reference: payRef
       });
@@ -139,9 +124,28 @@ const InvoiceListPage = () => {
       setPaymentModalItem(null);
       setPayAmount('');
       setPayRef('');
-      fetchInvoices();
+      fetchInvoices(pagination.page);
     } catch (error) {
       toast.error(error.response?.data?.message || 'Error recording payment');
+    }
+  };
+
+  const handleDelete = async (id, invoiceNo) => {
+    const isConfirmed = await confirm({
+      title: 'Move Invoice to Recycle Bin',
+      message: `Are you sure you want to move invoice "${invoiceNo}" to the Recycle Bin?`,
+      confirmText: 'Move to Bin',
+      type: 'danger'
+    });
+
+    if (isConfirmed) {
+      try {
+        await axios.delete(`/api/invoices/${id}`);
+        toast.success(`Invoice "${invoiceNo}" moved to Recycle Bin`);
+        fetchInvoices(pagination.page);
+      } catch (error) {
+        toast.error('Error deleting invoice');
+      }
     }
   };
 
@@ -150,18 +154,16 @@ const InvoiceListPage = () => {
       {/* Top Controls */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', flexWrap: 'wrap', gap: '12px' }}>
         <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
-          <form onSubmit={handleSearch} style={{ display: 'flex', gap: '8px' }}>
-            <div className="form-group" style={{ margin: 0, minWidth: '240px' }}>
+          <form onSubmit={handleSearch} style={{ display: 'flex', alignItems: 'center' }}>
+            <div className="search-bar-integrated">
+              <Search size={16} />
               <input
                 type="text"
-                placeholder="Search Invoice No / PO No..."
+                placeholder="Search invoice no, PO, customer..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
               />
             </div>
-            <button type="submit" className="btn-secondary">
-              <Search size={16} /> Search
-            </button>
           </form>
 
           <select
@@ -308,38 +310,53 @@ const InvoiceListPage = () => {
 
       {/* Edit Due Date Modal */}
       {dueDateModalItem && (
-        <div style={{
-          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-          backgroundColor: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000
-        }}>
-          <div style={{
-            backgroundColor: 'var(--bg-card)', padding: '28px', borderRadius: '12px', width: '400px',
-            border: '1px solid var(--border-color)', boxShadow: '0 10px 30px rgba(0,0,0,0.5)'
-          }}>
-            <h3 style={{ marginTop: 0, marginBottom: '8px' }}>Set Invoice Due Date</h3>
-            <p style={{ color: 'var(--text-secondary)', fontSize: '13px', marginBottom: '20px' }}>
-              Invoice: <strong style={{ color: 'var(--accent-orange)' }}>{dueDateModalItem.invoiceNo}</strong> | Current Due: <strong>{dueDateModalItem.dueDate || dueDateModalItem.date}</strong>
-            </p>
-
-            <div className="form-group" style={{ marginBottom: '24px' }}>
-              <label style={{ display: 'block', marginBottom: '8px', fontWeight: '600', fontSize: '13px' }}>Select New Due Date (Calendar):</label>
-              <input
-                type="date"
-                value={newDueDate}
-                onChange={(e) => setNewDueDate(e.target.value)}
-                style={{
-                  padding: '10px 12px',
-                  borderRadius: '8px',
-                  border: '1px solid var(--border-color)',
-                  fontSize: '14px',
-                  width: '100%',
-                  background: 'var(--bg-main)',
-                  color: 'var(--text-main)'
-                }}
-              />
+        <div className="modal-backdrop-custom" onClick={() => setDueDateModalItem(null)}>
+          <div className="modal-card-custom" style={{ maxWidth: '440px' }} onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header-custom">
+              <h3 className="modal-title-custom">
+                <Calendar size={18} color="var(--palette-orange)" /> Set Invoice Due Date
+              </h3>
+              <button onClick={() => setDueDateModalItem(null)} className="modal-close-btn" aria-label="Close modal">
+                <X size={18} />
+              </button>
             </div>
 
-            <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+            <div className="modal-body-custom">
+              <div style={{
+                padding: '12px 14px',
+                backgroundColor: 'var(--bg-main)',
+                borderRadius: '8px',
+                border: '1px solid var(--border-color)',
+                marginBottom: '18px',
+                fontSize: '13px',
+                lineHeight: 1.5
+              }}>
+                Invoice: <strong style={{ color: 'var(--palette-orange)' }}>{dueDateModalItem.invoiceNo}</strong>
+                <br />
+                Current Due: <strong style={{ color: 'var(--text-main)' }}>{dueDateModalItem.dueDate || dueDateModalItem.date}</strong>
+              </div>
+
+              <div className="form-group" style={{ marginBottom: 0 }}>
+                <label style={{ display: 'block', marginBottom: '8px', fontWeight: '600', fontSize: '13px' }}>Select New Due Date:</label>
+                <input
+                  type="date"
+                  value={newDueDate}
+                  onChange={(e) => setNewDueDate(e.target.value)}
+                  style={{
+                    padding: '10px 12px',
+                    borderRadius: '8px',
+                    border: '1px solid var(--border-color)',
+                    fontSize: '14px',
+                    width: '100%',
+                    background: 'var(--bg-main)',
+                    color: 'var(--text-main)'
+                  }}
+                  autoFocus
+                />
+              </div>
+            </div>
+
+            <div className="modal-footer-custom">
               <button onClick={() => setDueDateModalItem(null)} className="btn-secondary">Cancel</button>
               <button onClick={handleSaveDueDateModal} disabled={savingDueDate} className="btn-primary">
                 {savingDueDate ? 'Saving...' : 'Save Due Date'}
@@ -351,52 +368,64 @@ const InvoiceListPage = () => {
 
       {/* Record Payment Modal */}
       {paymentModalItem && (
-        <div style={{
-          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-          backgroundColor: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000
-        }}>
-          <div style={{
-            backgroundColor: 'var(--bg-card)', padding: '32px', borderRadius: '12px', width: '440px',
-            border: '1px solid var(--border-color)', boxShadow: '0 10px 30px rgba(0,0,0,0.5)'
-          }}>
-            <h3 style={{ marginTop: 0 }}>Record Payment</h3>
-            <p style={{ color: 'var(--text-secondary)', fontSize: '14px' }}>
-              Invoice: <strong>{paymentModalItem.invoiceNo}</strong> | PO: <strong>{paymentModalItem.poNumber}</strong><br />
-              Total: ${paymentModalItem.grandTotal.toFixed(2)} | Balance Due: <strong style={{ color: 'var(--accent-orange)' }}>${paymentModalItem.balanceDue.toFixed(2)}</strong>
-            </p>
-
-            <div className="form-group" style={{ marginBottom: '12px' }}>
-              <label>Payment Amount ($):</label>
-              <input
-                type="number"
-                step="0.01"
-                value={payAmount}
-                onChange={(e) => setPayAmount(e.target.value)}
-                autoFocus
-              />
+        <div className="modal-backdrop-custom" onClick={() => setPaymentModalItem(null)}>
+          <div className="modal-card-custom" style={{ maxWidth: '480px' }} onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header-custom">
+              <h3 className="modal-title-custom">
+                <DollarSign size={18} color="var(--palette-orange)" /> Record Payment
+              </h3>
+              <button onClick={() => setPaymentModalItem(null)} className="modal-close-btn" aria-label="Close modal">
+                <X size={18} />
+              </button>
             </div>
 
-            <div className="form-group" style={{ marginBottom: '12px' }}>
-              <label>Payment Method:</label>
-              <select value={payMethod} onChange={(e) => setPayMethod(e.target.value)}>
-                <option value="BANK_TRANSFER">Bank Transfer (TT)</option>
-                <option value="CHEQUE">Cheque</option>
-                <option value="CASH">Cash</option>
-                <option value="OTHER">Other</option>
-              </select>
+            <div className="modal-body-custom">
+              <div style={{
+                padding: '12px 14px',
+                backgroundColor: 'var(--bg-main)',
+                borderRadius: '8px',
+                border: '1px solid var(--border-color)',
+                marginBottom: '18px',
+                fontSize: '13px',
+                lineHeight: 1.5
+              }}>
+                Invoice: <strong style={{ color: 'var(--palette-orange)' }}>{paymentModalItem.invoiceNo}</strong> | PO: <strong>{paymentModalItem.poNumber}</strong><br />
+                Total: <strong>${paymentModalItem.grandTotal.toFixed(2)}</strong> | Balance Due: <strong style={{ color: '#dc2626' }}>${paymentModalItem.balanceDue.toFixed(2)}</strong>
+              </div>
+
+              <div className="form-group" style={{ marginBottom: '14px' }}>
+                <label>Payment Amount ($) *</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  value={payAmount}
+                  onChange={(e) => setPayAmount(e.target.value)}
+                  autoFocus
+                />
+              </div>
+
+              <div className="form-group" style={{ marginBottom: '14px' }}>
+                <label>Payment Method *</label>
+                <select className="filter-select" style={{ width: '100%' }} value={payMethod} onChange={(e) => setPayMethod(e.target.value)}>
+                  <option value="BANK_TRANSFER">Bank Transfer (TT)</option>
+                  <option value="CHEQUE">Cheque</option>
+                  <option value="CASH">Cash</option>
+                  <option value="OTHER">Other</option>
+                </select>
+              </div>
+
+              <div className="form-group" style={{ marginBottom: 0 }}>
+                <label>Reference / Cheque No / Transaction ID</label>
+                <input
+                  type="text"
+                  placeholder="e.g. TXN-998812"
+                  value={payRef}
+                  onChange={(e) => setPayRef(e.target.value)}
+                />
+              </div>
             </div>
 
-            <div className="form-group" style={{ marginBottom: '20px' }}>
-              <label>Reference / Cheque No / Transaction ID:</label>
-              <input
-                type="text"
-                placeholder="e.g. TXN-998812"
-                value={payRef}
-                onChange={(e) => setPayRef(e.target.value)}
-              />
-            </div>
-
-            <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+            <div className="modal-footer-custom">
               <button onClick={() => setPaymentModalItem(null)} className="btn-secondary">Cancel</button>
               <button onClick={handleRecordPayment} className="btn-primary">Record Payment</button>
             </div>

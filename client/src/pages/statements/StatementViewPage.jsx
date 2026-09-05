@@ -85,9 +85,9 @@ const StatementViewPage = () => {
           <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
             <Calendar size={15} style={{ color: 'var(--text-secondary)' }} />
             <select
+              className="filter-select"
               value={dateRangePreset}
               onChange={(e) => handlePresetChange(e.target.value)}
-              style={{ padding: '8px 12px', borderRadius: '8px', border: '1px solid var(--border-color)', fontSize: '13px', background: 'var(--bg-main)', color: 'var(--text-main)', cursor: 'pointer' }}
             >
               <option value="ALL">All Time</option>
               <option value="THIS_MONTH">This Month</option>
@@ -120,9 +120,9 @@ const StatementViewPage = () => {
           <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
             <span style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-secondary)' }}>Status:</span>
             <select
+              className="filter-select"
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              style={{ padding: '8px 12px', borderRadius: '8px', border: '1px solid var(--border-color)', fontSize: '13px', background: 'var(--bg-main)', color: 'var(--text-main)', cursor: 'pointer' }}
             >
               <option value="ALL">All Payments</option>
               <option value="PENDING">Pending Payment</option>
