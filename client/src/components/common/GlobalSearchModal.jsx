@@ -176,18 +176,49 @@ const GlobalSearchModal = () => {
               <X size={15} />
             </button>
           )}
-          <kbd style={{
-            fontSize: '11px',
-            padding: '2px 6px',
-            borderRadius: '4px',
-            backgroundColor: '#f1f5f9',
-            border: '1px solid #e2e8f0',
-            color: '#64748b',
-            fontWeight: 600,
-            lineHeight: 1
-          }}>
-            ESC
-          </kbd>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <kbd style={{
+              fontSize: '11px',
+              padding: '2px 6px',
+              borderRadius: '4px',
+              backgroundColor: '#f1f5f9',
+              border: '1px solid #e2e8f0',
+              color: '#64748b',
+              fontWeight: 600,
+              lineHeight: 1
+            }}>
+              ESC
+            </kbd>
+            <button
+              type="button"
+              onClick={() => setIsSearchModalOpen(false)}
+              style={{
+                background: '#f1f5f9',
+                border: '1px solid #e2e8f0',
+                borderRadius: '6px',
+                width: '26px',
+                height: '26px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                color: '#64748b',
+                transition: 'all 0.15s ease'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = '#e2e8f0';
+                e.currentTarget.style.color = '#0f172a';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = '#f1f5f9';
+                e.currentTarget.style.color = '#64748b';
+              }}
+              title="Close search (Esc)"
+              aria-label="Close search"
+            >
+              <X size={15} />
+            </button>
+          </div>
         </div>
 
         {/* Content Area */}
