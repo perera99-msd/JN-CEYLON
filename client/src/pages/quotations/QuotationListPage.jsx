@@ -4,7 +4,7 @@ import toast from 'react-hot-toast';
 import DashboardLayout from '../../components/layout/DashboardLayout';
 import Pagination from '../../components/common/Pagination';
 import SkeletonTable from '../../components/common/SkeletonTable';
-import { Plus, Search, Eye, Printer, Download, Edit3, Trash2, ArrowRight, Copy } from 'lucide-react';
+import { Plus, Search, Eye, Printer, Download, Edit3, Trash2, ArrowRight, Copy, FileText, X } from 'lucide-react';
 import { printDocumentInIframe } from '../../utils/print';
 import { useNavigate } from 'react-router-dom';
 import { useConfirm } from '../../contexts/ConfirmContext';

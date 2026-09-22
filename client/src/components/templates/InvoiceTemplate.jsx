@@ -1,6 +1,173 @@
-import React from 'react';
+import React, { useRef, useLayoutEffect } from 'react';
 import DocumentHeader from './DocumentHeader';
 import { formatMoney } from '../../utils/format';
+
+const AutoShrinkText = ({ children, maxHeight, defaultSize = 12, minSize = 7.5, step = 0.4, style }) => {
+  const ref = useRef(null);
+
+  useLayoutEffect(() => {
+    const element = ref.current;
+    if (!element || !maxHeight) return;
+
+    element.style.fontSize = `${defaultSize}px`;
+
+    let size = defaultSize;
+    while (element.scrollHeight > maxHeight && size > minSize) {
+      size = Math.round((size - step) * 10) / 10;
+      element.style.fontSize = `${size}px`;
+    }
+  }, [children, maxHeight, defaultSize, minSize, step]);
+
+  return (
+    <span
+      ref={ref}
+      style={{
+        display: 'block',
+        fontSize: `${defaultSize}px`,
+        wordBreak: 'break-word',
+        overflowWrap: 'break-word',
+        lineHeight: 'inherit',
+        ...style,
+      }}
+    >
+      {children}
+    </span>
+  );
+};
+
+const getImageStyle = (imageCount) => {
+  const sizeMap = {
+    1: { maxHeight: '160px', maxWidth: '180px' },
+    2: { maxHeight: '140px', maxWidth: '160px' },
+    3: { maxHeight: '105px', maxWidth: '130px' },
+    4: { maxHeight: '80px', maxWidth: '110px' },
+    5: { maxHeight: '62px', maxWidth: '95px' },
+  };
+  const size = sizeMap[imageCount] || { maxHeight: '38px', maxWidth: '80px' };
+  return {
+    ...size,
+    objectFit: 'contain',
+    display: 'block',
+    marginLeft: 'auto',
+    marginRight: 'auto',
+    marginTop: '4px',
+  };
+};
+
+const getRowPadding = (imageCount, itemCount) => {
+  if (imageCount === 0) {
+    const textOnlyPadding = {
+      1: '30px 5px',
+      2: '20px 5px',
+      3: '14px 5px',
+      4: '11px 5px',
+      5: '9px 5px',
+      6: '8px 5px',
+      7: '7px 5px',
+      8: '6px 5px',
+      9: '5px 5px',
+      10: '4px 5px',
+    };
+    return textOnlyPadding[Math.min(itemCount, 10)] || '4px 5px';
+  }
+  if (imageCount >= 4) return '5px 5px';
+  if (imageCount === 3) return '7px 5px';
+  if (imageCount === 2) return '9px 5px';
+  if (imageCount === 1) return '11px 5px';
+  return '4px 5px';
+};
+
+const BORDER = '1px solid #000';
+
+const renderTable = (pageItems, pageImageCount) => {
+  const rowPadding = getRowPadding(pageImageCount, pageItems.length);
+  const hasImages = pageImageCount > 0;
+  const imgPx = pageImageCount > 0 ? parseInt(getImageStyle(pageImageCount).maxHeight) : 0;
+  const maxNameHeight = hasImages ? Math.max(30, imgPx * 0.35) : 48;
+  const maxDescHeight = hasImages ? imgPx + 20 : 52;
+
+  return (
+    <div style={{ flexGrow: 0, display: 'flex', flexDirection: 'column', marginBottom: '6px' }}>
+      <table style={{ width: '100%', borderCollapse: 'collapse', border: BORDER, tableLayout: 'fixed' }}>
+        <thead>
+          <tr>
+            {[
+              { label: 'NO', width: '8%' },
+              { label: 'PRODUCT', width: '34%' },
+              { label: 'QTY', width: '7%' },
+              { label: 'DESCRIPTION', width: '27%' },
+              { label: 'PRICE', width: '12%' },
+              { label: 'TOTAL', width: '12%' },
+            ].map(({ label, width }) => (
+              <th
+                key={label}
+                style={{
+                  width,
+                  backgroundColor: '#000',
+                  color: '#fff',
+                  border: BORDER,
+                  fontSize: '11.5px',
+                  padding: '6px 5px',
+                  fontWeight: 'bold',
+                  textAlign: 'center',
+                  letterSpacing: '0.8px',
+                  textTransform: 'uppercase',
+                }}
+              >
+                {label}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {pageItems.map((item, idx) => {
+            const rowBg = idx % 2 === 0 ? '#ffffff' : '#f5f5f5';
+            const tdBase = {
+              border: BORDER,
+              fontSize: '12px',
+              fontWeight: 'bold',
+              verticalAlign: 'middle',
+              padding: rowPadding,
+              overflow: 'hidden',
+              wordBreak: 'break-word',
+              overflowWrap: 'break-word',
+            };
+
+            return (
+              <tr key={idx}>
+                <td style={{ ...tdBase, width: '8%', textAlign: 'center', backgroundColor: rowBg, overflow: 'visible' }}>
+                  <AutoShrinkText maxHeight={hasImages ? imgPx + 30 : 50} style={{ textAlign: 'center' }}>
+                    {item.no || ''}
+                  </AutoShrinkText>
+                </td>
+                <td style={{ ...tdBase, width: '34%', textAlign: 'center', backgroundColor: rowBg, lineHeight: '1.3', overflow: 'visible' }}>
+                  {item.name && (
+                    <AutoShrinkText maxHeight={maxNameHeight} style={{ marginBottom: item.image ? '3px' : '0', textAlign: 'center' }}>
+                      {item.name}
+                    </AutoShrinkText>
+                  )}
+                  {item.image && <img src={item.image} alt={item.name || 'product'} style={getImageStyle(pageImageCount)} />}
+                </td>
+                <td style={{ ...tdBase, width: '7%', textAlign: 'center', backgroundColor: rowBg, whiteSpace: 'nowrap' }}>
+                  {item.qty || ''}
+                </td>
+                <td style={{ ...tdBase, width: '27%', textAlign: 'left', backgroundColor: rowBg, lineHeight: '1.35' }}>
+                  <AutoShrinkText maxHeight={maxDescHeight}>{item.desc || ''}</AutoShrinkText>
+                </td>
+                <td style={{ ...tdBase, width: '12%', textAlign: 'right', backgroundColor: rowBg, paddingRight: '7px', fontVariantNumeric: 'tabular-nums' }}>
+                  {item.price != null && item.price !== '' ? formatMoney(item.price) : ''}
+                </td>
+                <td style={{ ...tdBase, width: '12%', textAlign: 'right', backgroundColor: rowBg, paddingRight: '7px', fontVariantNumeric: 'tabular-nums' }}>
+                  {item.total != null && item.total !== '' ? formatMoney(item.total) : ''}
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
+  );
+};
 
 const InvoiceTemplate = ({ data }) => {
   const {
@@ -59,6 +226,7 @@ const InvoiceTemplate = ({ data }) => {
   const pages = pagedItemGroups.map((pageItems, i) => {
     const isFirstPage = i === 0;
     const isLastPage = i === totalPages - 1;
+    const pageImageCount = pageItems.filter(item => item.image).length;
 
     return (
       <div className="a4-page" key={i}>
@@ -104,40 +272,7 @@ const InvoiceTemplate = ({ data }) => {
               <div className="greeting-text">
                 We thank you for your enquiry and take pleasure in quoting as follows -
               </div>
-              <div className="doc-table-wrapper">
-                <table className="exact-table">
-                  <thead>
-                    <tr>
-                      <th style={{ width: '10%' }}>NO</th>
-                      <th style={{ width: '32%' }}>PRODUCT</th>
-                      <th style={{ width: '8%' }}>QTY</th>
-                      <th style={{ width: '25%' }}>DESCRIPTION</th>
-                      <th style={{ width: '10%' }}>PRICE</th>
-                      <th style={{ width: '15%' }}>TOTAL</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {pageItems.map((item, idx) => (
-                      <tr key={idx}>
-                        <td style={{ width: '10%', whiteSpace: 'nowrap' }}>{item.no || ''}</td>
-                        <td style={{ width: '32%', textAlign: 'center' }}>
-                          {item.name || ''}
-                          {item.image && (
-                            <>
-                              <br />
-                              <img src={item.image} alt={item.name} className="item-thumbnail" />
-                            </>
-                          )}
-                        </td>
-                        <td style={{ width: '8%', whiteSpace: 'nowrap' }}>{item.qty || ''}</td>
-                        <td style={{ width: '25%', textAlign: 'left' }}>{item.desc || ''}</td>
-                        <td style={{ width: '10%', whiteSpace: 'nowrap' }}>{formatMoney(item.price)}</td>
-                        <td style={{ width: '15%', whiteSpace: 'nowrap' }}>{formatMoney(item.total)}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+              {renderTable(pageItems, pageImageCount)}
 
               {isLastPage && (
                 <div className="doc-footer-wrapper">
@@ -185,40 +320,7 @@ const InvoiceTemplate = ({ data }) => {
           </>
         ) : (
           <div className="doc-body" style={{ paddingTop: '15mm' }}>
-            <div className="doc-table-wrapper">
-              <table className="exact-table">
-                <thead>
-                  <tr>
-                    <th style={{ width: '10%' }}>NO</th>
-                    <th style={{ width: '32%' }}>PRODUCT</th>
-                    <th style={{ width: '8%' }}>QTY</th>
-                    <th style={{ width: '25%' }}>DESCRIPTION</th>
-                    <th style={{ width: '10%' }}>PRICE</th>
-                    <th style={{ width: '15%' }}>TOTAL</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {pageItems.map((item, idx) => (
-                    <tr key={idx}>
-                      <td style={{ width: '10%', whiteSpace: 'nowrap' }}>{item.no || ''}</td>
-                      <td style={{ width: '32%', textAlign: 'center' }}>
-                        {item.name || ''}
-                        {item.image && (
-                          <>
-                            <br />
-                            <img src={item.image} alt={item.name} className="item-thumbnail" />
-                          </>
-                        )}
-                      </td>
-                      <td style={{ width: '8%', whiteSpace: 'nowrap' }}>{item.qty || ''}</td>
-                      <td style={{ width: '25%', textAlign: 'left' }}>{item.desc || ''}</td>
-                      <td style={{ width: '10%', whiteSpace: 'nowrap' }}>{formatMoney(item.price)}</td>
-                      <td style={{ width: '15%', whiteSpace: 'nowrap' }}>{formatMoney(item.total)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            {renderTable(pageItems, pageImageCount)}
 
             {isLastPage && (
               <div className="doc-footer-wrapper">
