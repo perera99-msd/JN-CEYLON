@@ -116,6 +116,7 @@ const createApp = ({ useMongoSessionStore = true } = {}) => {
 
   app.use('/api/quotations', protect, require('./routes/quotations'));
   app.use('/api/invoices', protect, require('./routes/invoices'));
+  app.use('/api/delivery-notes', protect, require('./routes/deliveryNotes'));
   app.use('/api/statements', protect, require('./routes/statements'));
   app.use('/api/payments', protect, require('./routes/payments'));
   app.use('/api/companies', protect, require('./routes/companies'));

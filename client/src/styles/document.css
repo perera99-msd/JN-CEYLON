@@ -273,6 +273,128 @@
     padding: 1px 4px;
 }
 
+/* DELIVERY NOTE */
+.delivery-note-body {
+    padding-top: 12mm;
+}
+.delivery-note-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 12mm;
+    font-size: 13.5px;
+    font-weight: bold;
+    line-height: 1.35;
+}
+.delivery-to {
+    min-width: 48%;
+}
+.delivery-to > div {
+    margin-top: 4px;
+}
+.delivery-meta-table {
+    width: 48%;
+    border-collapse: collapse;
+    font-size: 12.5px;
+}
+.delivery-meta-table td {
+    border: 1px solid #777;
+    padding: 6px 8px;
+}
+.delivery-meta-table td:first-child {
+    width: 52%;
+    background: #f2f2f2;
+}
+.delivery-section-title {
+    font-size: 14px;
+    margin: 0 0 7px;
+}
+.delivery-items-table td {
+    height: 32px;
+    font-size: 11.5px;
+}
+.delivery-note-continuation {
+    padding-top: 12mm;
+}
+.delivery-description {
+    text-align: left !important;
+    white-space: pre-wrap;
+}
+.delivery-confirmation {
+    margin-top: 9mm;
+}
+.delivery-confirmation p {
+    margin: 0;
+    font-size: 12px;
+}
+.signature-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16mm;
+    margin: auto 16mm 0;
+    padding-top: 18mm;
+}
+.signature-block {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 47mm;
+    padding: 0 8mm;
+    font-size: 12px;
+    text-align: center;
+}
+.signature-role {
+    width: 100%;
+    padding-bottom: 2mm;
+    border-bottom: 1px solid #000;
+    font-size: 12px;
+    font-weight: bold;
+}
+.signature-write-line {
+    width: 78%;
+    height: 9mm;
+    border-bottom: 1px solid #000;
+    margin-bottom: 1mm;
+}
+.signature-block span {
+    font-size: 10.5px;
+    font-weight: normal;
+    line-height: 1.35;
+}
+.signature-name {
+    font-size: 10.5px !important;
+    font-weight: bold !important;
+}
+.signature-title {
+    font-size: 10.5px !important;
+    font-style: italic;
+}
+.signature-stamp {
+    margin-top: 3mm;
+    font-size: 9px !important;
+    color: #555;
+}
+.date-line {
+    align-self: stretch;
+    margin-top: auto;
+    padding-top: 5mm;
+    font-weight: normal;
+    white-space: nowrap;
+    text-align: left;
+}
+.date-line i {
+    display: inline-block;
+    width: 30mm;
+    border-bottom: 1px solid #000;
+}
+.delivery-thank-you {
+    text-align: center;
+    font-size: 15px;
+    font-weight: bold;
+    margin-top: auto;
+    padding-top: 10mm;
+}
+
 /* PERFECT PRINT OVERRIDES */
 @media print {
     @page {

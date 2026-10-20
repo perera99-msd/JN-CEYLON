@@ -13,6 +13,9 @@ import QuotationViewPage from './pages/quotations/QuotationViewPage';
 import InvoiceListPage from './pages/invoices/InvoiceListPage';
 import InvoiceEditorPage from './pages/invoices/InvoiceEditorPage';
 import InvoiceViewPage from './pages/invoices/InvoiceViewPage';
+import DeliveryNoteListPage from './pages/deliveryNotes/DeliveryNoteListPage';
+import DeliveryNoteEditorPage from './pages/deliveryNotes/DeliveryNoteEditorPage';
+import DeliveryNoteViewPage from './pages/deliveryNotes/DeliveryNoteViewPage';
 import StatementListPage from './pages/statements/StatementListPage';
 import StatementViewPage from './pages/statements/StatementViewPage';
 import CustomStatementEditor from './pages/statements/CustomStatementEditor';
@@ -27,6 +30,7 @@ import GlobalSearchModal from './components/common/GlobalSearchModal';
 
 import PrintQuotation from './pages/print/PrintQuotation';
 import PrintInvoice from './pages/print/PrintInvoice';
+import PrintDeliveryNote from './pages/print/PrintDeliveryNote';
 import PrintStatement from './pages/print/PrintStatement';
 import PrintCustomStatement from './pages/print/PrintCustomStatement';
 
@@ -57,6 +61,11 @@ function App() {
             <Route path="/invoices/edit/:id" element={<PrivateRoute><InvoiceEditorPage /></PrivateRoute>} />
             <Route path="/invoices/view/:id" element={<PrivateRoute><InvoiceViewPage /></PrivateRoute>} />
 
+            <Route path="/delivery-notes" element={<PrivateRoute><DeliveryNoteListPage /></PrivateRoute>} />
+            <Route path="/delivery-notes/new" element={<PrivateRoute><DeliveryNoteEditorPage /></PrivateRoute>} />
+            <Route path="/delivery-notes/edit/:id" element={<PrivateRoute><DeliveryNoteEditorPage /></PrivateRoute>} />
+            <Route path="/delivery-notes/view/:id" element={<PrivateRoute><DeliveryNoteViewPage /></PrivateRoute>} />
+
             <Route path="/statements" element={<PrivateRoute><StatementListPage /></PrivateRoute>} />
             <Route path="/statements/view/:companyId" element={<PrivateRoute><StatementViewPage /></PrivateRoute>} />
             <Route path="/statements/custom/new" element={<PrivateRoute><CustomStatementEditor /></PrivateRoute>} />
@@ -73,6 +82,7 @@ function App() {
             {/* Print-Only Standalone Routes */}
             <Route path="/print/quotation/:id" element={<PrintQuotation />} />
             <Route path="/print/invoice/:id" element={<PrintInvoice />} />
+            <Route path="/print/delivery-note/:id" element={<PrintDeliveryNote />} />
             <Route path="/print/statement/:companyId" element={<PrintStatement />} />
             <Route path="/print/custom-statement/:id" element={<PrintCustomStatement />} />
           </Routes>

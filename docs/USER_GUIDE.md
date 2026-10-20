@@ -11,6 +11,7 @@
 - [Managing Companies](#-managing-companies)
 - [Quotations](#-quotations)
 - [Invoices](#-invoices)
+- [Delivery Notes](#-delivery-notes)
 - [Payments](#-payments)
 - [Statements](#-statements)
 - [Printing Documents](#-printing-documents)
@@ -39,6 +40,7 @@ The **sidebar** provides quick access to all modules:
 | 📊 | Dashboard | Overview of business metrics |
 | 📝 | Quotations | Create and manage quotations |
 | 🧾 | Invoices | Create and manage invoices |
+| 🚚 | Delivery Notes | Prepare and print goods delivery notes |
 | 💰 | Payments | View recorded payments |
 | 📄 | Statements | Generate account statements |
 | 🏢 | Companies | Manage client companies |
@@ -182,6 +184,24 @@ Invoices can be created in two ways:
 
 ---
 
+## 🚚 Delivery Notes
+
+Delivery notes document goods handed over to a customer and include the same JN Ceylon letterhead used by the other printable documents.
+
+### Create a Delivery Note
+
+1. Navigate to **Delivery Notes** → **Create Delivery Note**
+2. Confirm the generated **Delivery Note Number** and enter the **Delivery Date**
+3. Choose an existing invoice to automatically load its customer, invoice number, PO number, date, and goods, or choose **Manual Invoice Entry**
+4. Review or edit the loaded details, and add each delivered good with its description, quantity, and remarks
+5. Set the **Released By** name and optional title. The default is **M S D Perera — Dispatch In-Charge**.
+6. Edit the confirmation text if required, then click **Save Delivery Note**
+7. Use **Print / Save PDF** to print the note
+
+The printed template includes separate blank lines for **Delivered By** and **Received By** signatures and blank physical date lines. These are intentionally left for handwritten completion after printing.
+
+---
+
 ## 💰 Payments
 
 Payments are recorded against specific invoices.
@@ -257,6 +277,7 @@ All documents can be printed as professional A4 PDFs.
 | Quotation | Company header, line items with images, terms & conditions |
 | Invoice | Company header, line items, payment status, due date |
 | Statement | Account summary, invoice breakdown, balance totals |
+| Delivery Note | Shared company letterhead, delivery references, goods table, confirmation, handwritten signature/date spaces |
 
 > 💡 **Tip:** For best results, use **A4** paper size and **Portrait** orientation in the print dialog. Disable headers and footers for a clean output.
 

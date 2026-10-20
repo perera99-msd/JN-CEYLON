@@ -5,7 +5,9 @@ async function initializeSequence(type) {
   if (!sequence || sequence.prefix) {
     const defaultData = type === 'QUOTATION' 
       ? { prefixNumber: 158, code: 'RC', currentNumber: 576 }
-      : { prefixNumber: 111, code: 'NVO', currentNumber: 351 };
+      : type === 'DELIVERY_NOTE'
+        ? { prefixNumber: 111, code: 'NVO', currentNumber: 363 }
+        : { prefixNumber: 111, code: 'NVO', currentNumber: 351 };
 
     sequence = await Sequence.findOneAndUpdate(
       { type },
