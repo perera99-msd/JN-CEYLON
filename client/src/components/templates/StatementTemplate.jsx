@@ -2,18 +2,46 @@ import React from 'react';
 import DocumentHeader from './DocumentHeader';
 import { formatMoney } from '../../utils/format';
 
-const StatementTemplate = ({ data }) => {
+const StatementTemplate = ({ data, useCalculatedTotals = false }) => {
   const {
     company,
     statementDate = new Date().toLocaleDateString('en-GB').replace(/\//g, '.'),
     items = [],
     pendingTotalBalance,
+    overdueTotalBalance,
+    totalOutstandingBalance,
     accountTotalBalance
   } = data || {};
 
-  const itemsTotalSum = (items || []).reduce((sum, item) => sum + parseFloat(item.total || item.balanceDue || 0), 0);
-  const pendingDisplay = pendingTotalBalance !== undefined ? pendingTotalBalance : itemsTotalSum;
-  const accountDisplay = accountTotalBalance !== undefined ? accountTotalBalance : itemsTotalSum;
+  const calculatedPending = (items || []).reduce((sum, item) => {
+    const s = (item.status || '').toString().trim().toLowerCase();
+    if (s === 'pending') {
+      return sum + parseFloat(item.total || item.balanceDue || 0);
+    }
+    return sum;
+  }, 0);
+
+  const calculatedOverdue = (items || []).reduce((sum, item) => {
+    const s = (item.status || '').toString().trim().toLowerCase();
+    if (s === 'overdue') {
+      return sum + parseFloat(item.total || item.balanceDue || 0);
+    }
+    return sum;
+  }, 0);
+
+  const pendingDisplay = !useCalculatedTotals && (pendingTotalBalance !== undefined && pendingTotalBalance !== '')
+    ? parseFloat(pendingTotalBalance)
+    : calculatedPending;
+
+  const overdueDisplay = !useCalculatedTotals && (overdueTotalBalance !== undefined && overdueTotalBalance !== '')
+    ? parseFloat(overdueTotalBalance)
+    : calculatedOverdue;
+
+  const totalOutstandingDisplay = !useCalculatedTotals && (totalOutstandingBalance !== undefined && totalOutstandingBalance !== '')
+    ? parseFloat(totalOutstandingBalance)
+    : ((!useCalculatedTotals && accountTotalBalance !== undefined && accountTotalBalance !== '')
+      ? parseFloat(accountTotalBalance)
+      : (pendingDisplay + overdueDisplay));
 
   const itemsPerPage = 10;
   const totalPages = Math.max(1, Math.ceil((items || []).length / itemsPerPage));
@@ -65,7 +93,7 @@ const StatementTemplate = ({ data }) => {
                           Total Balance
                         </td>
                         <td style={{ background: '#fff', color: '#000', textAlign: 'center', fontWeight: 'bold' }}>
-                          $ {formatMoney(accountDisplay)}
+                          $ {formatMoney(totalOutstandingDisplay)}
                         </td>
                       </tr>
                       <tr>
@@ -74,6 +102,14 @@ const StatementTemplate = ({ data }) => {
                         </td>
                         <td style={{ background: '#fff', color: '#000', textAlign: 'center', fontWeight: 'bold' }}>
                           {statementDate}
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style={{ background: '#fff', color: '#000', textAlign: 'center', fontWeight: 'bold', width: '55%' }}>
+                          Statement Date
+                        </td>
+                        <td style={{ background: '#fff', color: '#000', textAlign: 'center', fontWeight: 'bold' }}>
+                          {new Date().toLocaleDateString('en-GB').replace(/\//g, '.')}
                         </td>
                       </tr>
                     </tbody>
@@ -120,23 +156,31 @@ const StatementTemplate = ({ data }) => {
                         <td style={{ width: '90%', background: '#000', color: '#fff', textAlign: 'right', paddingRight: '15px', border: '1px solid #000', fontSize: '13px', fontWeight: 'bold' }}>
                           Pending Total Balance
                         </td>
-                        <td style={{ width: '10%', background: '#000', color: '#fff', textAlign: 'center', fontWeight: 'bold', border: '1px solid #000', fontSize: '14px', whiteSpace: 'nowrap' }}>
+                        <td style={{ width: '10%', background: '#000', color: '#fff', textAlign: 'center', fontWeight: 'bold', border: '1px solid #000', borderBottom: '1px solid #555', fontSize: '14px', whiteSpace: 'nowrap' }}>
                           $ {formatMoney(pendingDisplay)}
                         </td>
                       </tr>
                       <tr style={{ height: '28px' }}>
                         <td style={{ width: '90%', background: '#000', color: '#fff', textAlign: 'right', paddingRight: '15px', border: '1px solid #000', fontSize: '13px', fontWeight: 'bold' }}>
-                          Account Total Balance
+                          Overdue Total Balance
+                        </td>
+                        <td style={{ width: '10%', background: '#000', color: '#fff', textAlign: 'center', fontWeight: 'bold', border: '1px solid #000', borderBottom: '1px solid #555', fontSize: '14px', whiteSpace: 'nowrap' }}>
+                          $ {formatMoney(overdueDisplay)}
+                        </td>
+                      </tr>
+                      <tr style={{ height: '28px' }}>
+                        <td style={{ width: '90%', background: '#000', color: '#fff', textAlign: 'right', paddingRight: '15px', border: '1px solid #000', fontSize: '13px', fontWeight: 'bold' }}>
+                          Total Outstanding Balance
                         </td>
                         <td style={{ width: '10%', background: '#000', color: '#fff', textAlign: 'center', fontWeight: 'bold', border: '1px solid #000', fontSize: '14px', whiteSpace: 'nowrap' }}>
-                          $ {formatMoney(accountDisplay)}
+                          $ {formatMoney(totalOutstandingDisplay)}
                         </td>
                       </tr>
                     </tbody>
                   </table>
 
                   <div style={{ textAlign: 'center', fontSize: '14px', fontWeight: 'bold', marginTop: '15px', lineHeight: '1.6' }}>
-                    Your account balance is <strong>${formatMoney(pendingDisplay)}</strong> Please make your payment to cover the balance by the due date.<br />
+                    Your account balance is <strong>${formatMoney(totalOutstandingDisplay)}</strong> Please make your payment to cover the balance by the due date.<br />
                     Make all checks payable to Ceylon Engineers<br />
                     <span style={{ fontSize: '16px', fontWeight: 'bold' }}>Thank you for your business!</span><br />
                     <span style={{ fontSize: '13px', fontWeight: 'normal' }}>
@@ -189,23 +233,31 @@ const StatementTemplate = ({ data }) => {
                       <td style={{ width: '90%', background: '#000', color: '#fff', textAlign: 'right', paddingRight: '15px', border: '1px solid #000', fontSize: '13px', fontWeight: 'bold' }}>
                         Pending Total Balance
                       </td>
-                      <td style={{ width: '10%', background: '#000', color: '#fff', textAlign: 'center', fontWeight: 'bold', border: '1px solid #000', fontSize: '14px', whiteSpace: 'nowrap' }}>
+                      <td style={{ width: '10%', background: '#000', color: '#fff', textAlign: 'center', fontWeight: 'bold', border: '1px solid #000', borderBottom: '1px solid #555', fontSize: '14px', whiteSpace: 'nowrap' }}>
                         $ {formatMoney(pendingDisplay)}
                       </td>
                     </tr>
                     <tr style={{ height: '28px' }}>
                       <td style={{ width: '90%', background: '#000', color: '#fff', textAlign: 'right', paddingRight: '15px', border: '1px solid #000', fontSize: '13px', fontWeight: 'bold' }}>
-                        Account Total Balance
+                        Overdue Total Balance
+                      </td>
+                      <td style={{ width: '10%', background: '#000', color: '#fff', textAlign: 'center', fontWeight: 'bold', border: '1px solid #000', borderBottom: '1px solid #555', fontSize: '14px', whiteSpace: 'nowrap' }}>
+                        $ {formatMoney(overdueDisplay)}
+                      </td>
+                    </tr>
+                    <tr style={{ height: '28px' }}>
+                      <td style={{ width: '90%', background: '#000', color: '#fff', textAlign: 'right', paddingRight: '15px', border: '1px solid #000', fontSize: '13px', fontWeight: 'bold' }}>
+                        Total Outstanding Balance
                       </td>
                       <td style={{ width: '10%', background: '#000', color: '#fff', textAlign: 'center', fontWeight: 'bold', border: '1px solid #000', fontSize: '14px', whiteSpace: 'nowrap' }}>
-                        $ {formatMoney(accountDisplay)}
+                        $ {formatMoney(totalOutstandingDisplay)}
                       </td>
                     </tr>
                   </tbody>
                 </table>
 
                 <div style={{ textAlign: 'center', fontSize: '14px', fontWeight: 'bold', marginTop: '15px', lineHeight: '1.6' }}>
-                  Your account balance is <strong>${formatMoney(pendingDisplay)}</strong> Please make your payment to cover the balance by the due date.<br />
+                  Your account balance is <strong>${formatMoney(totalOutstandingDisplay)}</strong> Please make your payment to cover the balance by the due date.<br />
                   Make all checks payable to Ceylon Engineers<br />
                   <span style={{ fontSize: '16px', fontWeight: 'bold' }}>Thank you for your business!</span><br />
                   <span style={{ fontSize: '13px', fontWeight: 'normal' }}>

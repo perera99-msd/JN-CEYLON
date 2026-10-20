@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import DashboardLayout from '../../components/layout/DashboardLayout';
 import StatementTemplate from '../../components/templates/StatementTemplate';
-import { Printer, ArrowLeft, Filter, Calendar } from 'lucide-react';
+import { Printer, ArrowLeft, Filter, Calendar, FileSpreadsheet } from 'lucide-react';
 import { printDocumentInIframe } from '../../utils/print';
 
 const StatementViewPage = () => {
@@ -68,6 +68,13 @@ const StatementViewPage = () => {
           <ArrowLeft size={16} /> Back to Statements
         </button>
         <div style={{ display: 'flex', gap: '12px' }}>
+          <button
+            onClick={() => navigate(`/statements/custom/new?companyId=${companyId}`)}
+            className="btn-secondary"
+            title="Create a customizable statement for this customer"
+          >
+            <FileSpreadsheet size={16} /> Create Custom Statement
+          </button>
           <button onClick={() => printDocumentInIframe(`/print/statement/${companyId}`)} className="btn-primary">
             <Printer size={16} /> Print / Save PDF
           </button>
@@ -151,7 +158,9 @@ const StatementViewPage = () => {
         {loading ? (
           <div style={{ color: '#fff', fontSize: '16px' }}>Loading Account Statement...</div>
         ) : (
-          <StatementTemplate data={statementData} />
+          <StatementTemplate
+            data={statementData}
+          />
         )}
       </div>
     </DashboardLayout>

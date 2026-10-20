@@ -28,7 +28,7 @@ router.get('/:id', async (req, res) => {
 // POST /api/custom-statements - Create custom statement
 router.post('/', async (req, res) => {
   try {
-    const { title, statementDate, company, items, pendingTotalBalance, accountTotalBalance } = req.body;
+    const { title, statementDate, company, items, pendingTotalBalance, overdueTotalBalance, totalOutstandingBalance, accountTotalBalance } = req.body;
 
     const calculatedItems = (items || []).map(item => ({
       ...item,
@@ -37,11 +37,27 @@ router.post('/', async (req, res) => {
 
     const calculatedPending = pendingTotalBalance !== undefined && pendingTotalBalance !== ''
       ? parseFloat(pendingTotalBalance)
-      : calculatedItems.reduce((sum, item) => sum + item.total, 0);
+      : calculatedItems.reduce((sum, item) => {
+          const s = (item.status || '').toString().trim().toLowerCase();
+          if (s === 'pending') {
+            return sum + item.total;
+          }
+          return sum;
+        }, 0);
 
-    const calculatedAccount = accountTotalBalance !== undefined && accountTotalBalance !== ''
-      ? parseFloat(accountTotalBalance)
-      : calculatedPending;
+    const calculatedOverdue = overdueTotalBalance !== undefined && overdueTotalBalance !== ''
+      ? parseFloat(overdueTotalBalance)
+      : calculatedItems.reduce((sum, item) => {
+          const s = (item.status || '').toString().trim().toLowerCase();
+          if (s === 'overdue') {
+            return sum + item.total;
+          }
+          return sum;
+        }, 0);
+
+    const calculatedOutstanding = totalOutstandingBalance !== undefined && totalOutstandingBalance !== ''
+      ? parseFloat(totalOutstandingBalance)
+      : (calculatedPending + calculatedOverdue);
 
     const statement = new CustomStatement({
       title: title || 'Statement of Account',
@@ -49,7 +65,9 @@ router.post('/', async (req, res) => {
       company,
       items: calculatedItems,
       pendingTotalBalance: parseFloat(calculatedPending.toFixed(2)),
-      accountTotalBalance: parseFloat(calculatedAccount.toFixed(2))
+      overdueTotalBalance: parseFloat(calculatedOverdue.toFixed(2)),
+      totalOutstandingBalance: parseFloat(calculatedOutstanding.toFixed(2)),
+      accountTotalBalance: parseFloat(calculatedOutstanding.toFixed(2))
     });
 
     await statement.save();
@@ -63,7 +81,7 @@ router.post('/', async (req, res) => {
 // PUT /api/custom-statements/:id - Edit custom statement
 router.put('/:id', async (req, res) => {
   try {
-    const { title, statementDate, company, items, pendingTotalBalance, accountTotalBalance } = req.body;
+    const { title, statementDate, company, items, pendingTotalBalance, overdueTotalBalance, totalOutstandingBalance, accountTotalBalance } = req.body;
 
     const calculatedItems = (items || []).map(item => ({
       ...item,
@@ -72,11 +90,27 @@ router.put('/:id', async (req, res) => {
 
     const calculatedPending = pendingTotalBalance !== undefined && pendingTotalBalance !== ''
       ? parseFloat(pendingTotalBalance)
-      : calculatedItems.reduce((sum, item) => sum + item.total, 0);
+      : calculatedItems.reduce((sum, item) => {
+          const s = (item.status || '').toString().trim().toLowerCase();
+          if (s === 'pending') {
+            return sum + item.total;
+          }
+          return sum;
+        }, 0);
 
-    const calculatedAccount = accountTotalBalance !== undefined && accountTotalBalance !== ''
-      ? parseFloat(accountTotalBalance)
-      : calculatedPending;
+    const calculatedOverdue = overdueTotalBalance !== undefined && overdueTotalBalance !== ''
+      ? parseFloat(overdueTotalBalance)
+      : calculatedItems.reduce((sum, item) => {
+          const s = (item.status || '').toString().trim().toLowerCase();
+          if (s === 'overdue') {
+            return sum + item.total;
+          }
+          return sum;
+        }, 0);
+
+    const calculatedOutstanding = totalOutstandingBalance !== undefined && totalOutstandingBalance !== ''
+      ? parseFloat(totalOutstandingBalance)
+      : (calculatedPending + calculatedOverdue);
 
     const updateData = {
       title,
@@ -84,7 +118,9 @@ router.put('/:id', async (req, res) => {
       company,
       items: calculatedItems,
       pendingTotalBalance: parseFloat(calculatedPending.toFixed(2)),
-      accountTotalBalance: parseFloat(calculatedAccount.toFixed(2))
+      overdueTotalBalance: parseFloat(calculatedOverdue.toFixed(2)),
+      totalOutstandingBalance: parseFloat(calculatedOutstanding.toFixed(2)),
+      accountTotalBalance: parseFloat(calculatedOutstanding.toFixed(2))
     };
 
     const statement = await CustomStatement.findByIdAndUpdate(

@@ -55,14 +55,14 @@ async function ensureIndexes() {
       { background: true, name: 'idx_custom_statement_list' }
     );
 
-    console.log('[INDEX] MongoDB indexes verified successfully.');
+    return true;
   } catch (error) {
-    // Don't crash on duplicate index errors — they just mean the index already exists
+    // Index already exists (code 85 or 86) is expected and healthy
     if (error.code === 85 || error.code === 86) {
-      console.log('[INDEX] Indexes already exist, skipping.');
-    } else {
-      console.warn('[INDEX] Warning: Could not create indexes:', error.message);
+      return true;
     }
+    console.warn(`\x1b[33m[WARN]\x1b[0m Could not verify database indexes: ${error.message}`);
+    return false;
   }
 }
 

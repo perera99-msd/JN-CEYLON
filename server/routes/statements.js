@@ -11,7 +11,7 @@ router.get('/overview', async (req, res) => {
       const invoices = await Invoice.find({ company: company._id, isDeleted: { $ne: true } });
       
       const totalInvoices = invoices.length;
-      const pendingInvoices = invoices.filter(inv => inv.status !== 'PAID');
+      const pendingInvoices = invoices.filter(inv => inv.status === 'PENDING');
       const totalBalance = invoices.reduce((sum, inv) => sum + (inv.balanceDue || 0), 0);
       const pendingBalance = pendingInvoices.reduce((sum, inv) => sum + (inv.balanceDue || 0), 0);
 
@@ -67,38 +67,55 @@ router.get('/company/:companyId', async (req, res) => {
     // Filter by status if provided
     if (status && status !== 'ALL') {
       if (status === 'PENDING') {
-        invoices = invoices.filter(inv => inv.status !== 'PAID');
+        invoices = invoices.filter(inv => inv.status === 'PENDING');
       } else if (status === 'PAID') {
         invoices = invoices.filter(inv => inv.status === 'PAID');
       }
     }
 
-    const statementItems = invoices.map(inv => ({
-      _id: inv._id,
-      date: inv.date,
-      invoice: inv.invoiceNo,
-      desc: inv.items.map(i => i.name).filter(Boolean).join(', ') || 'Spare parts supply',
-      po: inv.poNumber,
-      status: inv.status === 'PAID' ? 'Paid' : 'Pending',
-      due: inv.dueDate || inv.date,
-      total: parseFloat((inv.grandTotal || 0).toFixed(2)),
-      balanceDue: parseFloat((inv.balanceDue || 0).toFixed(2)),
-      rawStatus: inv.status
-    }));
+    const { isPastDueDate } = require('../services/overdueChecker');
+    const statementItems = invoices.map(inv => {
+      const isPast = inv.dueDate && isPastDueDate(inv.dueDate);
+      const isOverdue = inv.status === 'OVERDUE' || (isPast && inv.status !== 'PAID');
+      let displayStatus = 'Pending';
+      if (inv.status === 'PAID') {
+        displayStatus = 'Paid';
+      } else if (isOverdue) {
+        displayStatus = 'Overdue';
+      }
+
+      return {
+        _id: inv._id,
+        date: inv.date,
+        invoice: inv.invoiceNo,
+        desc: inv.items.map(i => i.name).filter(Boolean).join(', ') || 'Spare parts supply',
+        po: inv.poNumber,
+        status: displayStatus,
+        due: inv.dueDate || inv.date,
+        total: parseFloat((inv.grandTotal || 0).toFixed(2)),
+        balanceDue: parseFloat((inv.balanceDue || 0).toFixed(2)),
+        rawStatus: inv.status
+      };
+    });
 
     const pendingTotalBalance = statementItems
-      .filter(item => item.rawStatus !== 'PAID')
+      .filter(item => item.status === 'Pending')
       .reduce((sum, item) => sum + item.total, 0);
 
-    const accountTotalBalance = statementItems
+    const overdueTotalBalance = statementItems
+      .filter(item => item.status === 'Overdue')
       .reduce((sum, item) => sum + item.total, 0);
+
+    const totalOutstandingBalance = pendingTotalBalance + overdueTotalBalance;
 
     res.json({
       company,
       statementDate: new Date().toLocaleDateString('en-GB').replace(/\//g, '.'),
       pendingTotalBalance: parseFloat(pendingTotalBalance.toFixed(2)),
-      accountTotalBalance: parseFloat(accountTotalBalance.toFixed(2)),
-      totalBalance: parseFloat(accountTotalBalance.toFixed(2)),
+      overdueTotalBalance: parseFloat(overdueTotalBalance.toFixed(2)),
+      totalOutstandingBalance: parseFloat(totalOutstandingBalance.toFixed(2)),
+      accountTotalBalance: parseFloat(totalOutstandingBalance.toFixed(2)),
+      totalBalance: parseFloat(totalOutstandingBalance.toFixed(2)),
       items: statementItems
     });
   } catch (error) {

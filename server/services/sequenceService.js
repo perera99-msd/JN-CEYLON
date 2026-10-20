@@ -3,7 +3,7 @@ const Sequence = require('../models/Sequence');
 async function initializeSequence(type) {
   let sequence = await Sequence.findOne({ type });
   if (!sequence || sequence.prefix) {
-    const defaultData = type === 'QUOTATION' 
+    const defaultData = type === 'QUOTATION'
       ? { prefixNumber: 158, code: 'RC', currentNumber: 576 }
       : type === 'DELIVERY_NOTE'
         ? { prefixNumber: 111, code: 'NVO', currentNumber: 363 }
@@ -67,4 +67,3 @@ async function consumeNextSequence(type) {
 }
 
 module.exports = { previewNextSequence, consumeNextSequence };
-

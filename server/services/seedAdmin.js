@@ -7,18 +7,16 @@ const seedAdmin = async () => {
     const fullName = process.env.ADMIN_FULL_NAME || 'JN Ceylon Admin';
 
     if (!username || !password) {
-      console.warn('[SEED] Admin creation skipped: ADMIN_USERNAME and ADMIN_PASSWORD are required.');
       return;
     }
 
     if (password.length < 12) {
-      console.warn('[SEED] Admin creation skipped: ADMIN_PASSWORD must be at least 12 characters.');
+      console.warn('\x1b[33m[WARN]\x1b[0m Admin password must be at least 12 characters.');
       return;
     }
 
     const adminUser = await User.findOne({ username: username.trim() });
     if (!adminUser) {
-      console.log(`[SEED] Admin account not found. Creating ${username.trim()} user...`);
       const newAdmin = new User({
         username: username.trim(),
         fullName,
@@ -26,10 +24,17 @@ const seedAdmin = async () => {
         role: 'ADMIN'
       });
       await newAdmin.save();
-      console.log('[SEED] Initial Admin user created successfully.');
+      console.log(`[AUTH] Initial admin user (${username.trim()}) created.`);
+    } else {
+      const isMatch = await adminUser.matchPassword(password);
+      if (!isMatch) {
+        adminUser.password = password;
+        await adminUser.save();
+        console.log(`[AUTH] Admin password updated to match configured ADMIN_PASSWORD.`);
+      }
     }
   } catch (error) {
-    console.error('[SEED] Error seeding admin user:', error.message);
+    console.error('\x1b[31m[ERROR]\x1b[0m Error initializing admin user:', error.message);
   }
 };
 

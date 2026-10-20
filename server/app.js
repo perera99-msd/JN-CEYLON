@@ -97,7 +97,7 @@ const createApp = ({ useMongoSessionStore = true } = {}) => {
     cookie: {
       maxAge: 14 * 24 * 60 * 60 * 1000,
       httpOnly: true,
-      secure: isProduction,
+      secure: isProduction && process.env.COOKIE_SECURE !== 'false',
       sameSite: process.env.COOKIE_SAME_SITE || 'lax'
     }
   };

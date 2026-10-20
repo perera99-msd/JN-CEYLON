@@ -142,13 +142,20 @@ const StatementListPage = () => {
                 </div>
               </div>
 
-              <div style={{ display: 'flex', gap: '10px' }}>
+              <div style={{ display: 'flex', gap: '8px' }}>
                 <button
                   onClick={() => navigate(`/statements/view/${item.company._id}`)}
                   className="btn-primary"
                   style={{ flex: 1, justifyContent: 'center' }}
                 >
                   <Eye size={16} /> View Statement
+                </button>
+                <button
+                  onClick={() => navigate(`/statements/custom/new?companyId=${item.company._id}`)}
+                  className="btn-secondary"
+                  title="Create Custom Statement for this Company"
+                >
+                  <FileSpreadsheet size={16} />
                 </button>
                 <button
                   onClick={() => printDocumentInIframe(`/print/statement/${item.company._id}`)}

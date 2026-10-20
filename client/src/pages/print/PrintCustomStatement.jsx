@@ -14,7 +14,9 @@ const PrintCustomStatement = () => {
     let active = true;
     axios.get(`/api/custom-statements/${id}`)
       .then(res => {
-        if (active) setData(res.data);
+        if (active) {
+          setData(res.data);
+        }
       })
       .catch(err => console.error(err))
       .finally(() => {
@@ -39,7 +41,7 @@ const PrintCustomStatement = () => {
 
   return (
     <div className="print-workspace" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', background: '#fff' }}>
-      <StatementTemplate data={data} />
+      <StatementTemplate data={data} useCalculatedTotals />
     </div>
   );
 };

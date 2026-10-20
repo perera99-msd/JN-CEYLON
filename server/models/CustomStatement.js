@@ -29,6 +29,14 @@ const CustomStatementSchema = new mongoose.Schema({
     type: Number,
     default: 0.00
   },
+  overdueTotalBalance: {
+    type: Number,
+    default: 0.00
+  },
+  totalOutstandingBalance: {
+    type: Number,
+    default: 0.00
+  },
   accountTotalBalance: {
     type: Number,
     default: 0.00
